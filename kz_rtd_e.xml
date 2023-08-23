@@ -1,0 +1,275 @@
+<wiidisc version="1" shiftfiles="true">
+	<id game="RMC">
+		<region type="E"/>
+	</id>
+    <options>
+        <section name="KZ Random Texture Distribution">
+            <option name="Random Track Texture" id="kz_texture_pack_main">
+                <choice name="Enabled">
+                    <patch id="kz_texture_pack_main"/>
+                    <patch id="kz_texture_pack_texture"/>
+                </choice>
+                <choice name="Disable Original Tracks">
+                    <patch id="kz_texture_pack_main"/>
+                    <patch id="kz_texture_pack_texture_disable_nintendo"/>
+                </choice>
+            </option>
+            <option name="Wiimmfi Patcher" id="kz_texture_pack_wiimmfi">
+                <choice name="Enabled">
+                    <patch id="kz_texture_pack_wiimmfi"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+            </option>
+            <option name="CTGP Speed-o-Meter (Replica)" id="kz_texture_pack_som">
+                <choice name="0 Decimals">
+                    <patch id="kz_texture_pack_som_dec_0"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="1 Decimals">
+                    <patch id="kz_texture_pack_som_dec_1"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="2 Decimals">
+                    <patch id="kz_texture_pack_som_dec_2"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+            </option>
+            <!--<option name="Unlock All Without Save" id="kz_texture_pack_unlock_all">
+                <choice name="Enabled">
+                    <patch id="kz_texture_pack_unlock_all"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+            </option>-->
+            <option name="Region Color (Online Name Tag Color)" id="kz_texture_pack_region_color">
+                <choice name="Red">
+                    <patch id="kz_texture_pack_region_color_00"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Blue">
+                    <patch id="kz_texture_pack_region_color_01"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Green">
+                    <patch id="kz_texture_pack_region_color_02"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Yellow">
+                    <patch id="kz_texture_pack_region_color_03"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="White">
+                    <patch id="kz_texture_pack_region_color_04"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Purple">
+                    <patch id="kz_texture_pack_region_color_05"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Sky Blue (ERC)">
+                    <patch id="kz_texture_pack_region_color_fd"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Orange (ERC)">
+                    <patch id="kz_texture_pack_region_color_fe"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="Black (ERC)">
+                    <patch id="kz_texture_pack_region_color_ff"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+            </option>
+            <option name="Match Make Region Modifier (Regional)" id="kz_texture_pack_matchmake">
+                <choice name="vs_0 (Japan)">
+                    <patch id="kz_texture_pack_matchmake_0000"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_1 (America)">
+                    <patch id="kz_texture_pack_matchmake_0001"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_2 (Europe)">
+                    <patch id="kz_texture_pack_matchmake_0002"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_3 (Australia)">
+                    <patch id="kz_texture_pack_matchmake_0003"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_4 (Taiwan)">
+                    <patch id="kz_texture_pack_matchmake_0004"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_5 (Korea)">
+                    <patch id="kz_texture_pack_matchmake_0005"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_6 (Chaina)">
+                    <patch id="kz_texture_pack_matchmake_0006"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <!--<choice name="vs_7 (Reserved)">
+                    <patch id="kz_texture_pack_matchmake_0007"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_8 (Reserved)">
+                    <patch id="kz_texture_pack_matchmake_0008"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_9 (Reserved)">
+                    <patch id="kz_texture_pack_matchmake_0009"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_10 (Reserved)">
+                    <patch id="kz_texture_pack_matchmake_000a"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+                <choice name="vs_11 (Reserved)">
+                    <patch id="kz_texture_pack_matchmake_000b"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>-->
+            </option>
+            <option name="Gecko Codes" id="kz_texture_pack_gct">
+                <choice name="Enabled">
+                    <patch id="kz_texture_pack_gct"/>
+                    <patch id="kz_texture_pack_main"/>
+                </choice>
+            </option>
+            <option name="'My Stuff' Folder" id="kz_texture_pack_my_stuff">
+                <choice name="Enabled">
+                    <patch id="kz_texture_pack_default_my_stuff"/>
+                </choice>
+                <choice name="CTGP-R My Stuff">
+                    <patch id="kz_texture_pack_ctgpr_my_stuff"/>
+                </choice>
+            </option>
+        </section>
+    </options>
+    <patch id="kz_texture_pack_main">
+        <memory offset="0x0016ea2c" value="4be955d4" />
+        <memory offset="0x00004000" valuefile="/kz_rtd/Loader_E.bin" />
+        <memory offset="0x80000CC9" value="01" />
+        <folder external="/kz_rtd/files/" disc="/" create="true" />
+    </patch>
+    <patch id="kz_texture_pack_texture">
+        <memory offset="0x80000CC4" value="01" />
+    </patch>
+     <patch id="kz_texture_pack_texture_disable_nintendo">
+        <memory offset="0x80000CC4" value="01" />
+        <memory offset="0x80000CC5" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_wiimmfi">
+        <memory offset="0x80000CC6" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_som_dec_0">
+        <memory offset="0x80000CC7" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_som_dec_1">
+        <memory offset="0x80000CC7" value="01" />
+        <memory offset="0x80000CC8" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_som_dec_2">
+        <memory offset="0x80000CC7" value="01" />
+        <memory offset="0x80000CC8" value="02" />
+    </patch>
+    <patch id="kz_texture_pack_unlock_all">
+        <memory offset="0x80000CC9" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_mii_heads">
+        <memory offset="0x80000CCA" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_00">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="00" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_01">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="01" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_02">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="02" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_03">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="03" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_04">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="04" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_05">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="05" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_fd">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="FD" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_fe">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="FE" />
+    </patch>
+    <patch id="kz_texture_pack_region_color_ff">
+        <memory offset="0x80000CCB" value="01" />
+        <memory offset="0x80000CCC" value="FF" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0000">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0000" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0001">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0001" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0002">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0002" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0003">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0003" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0004">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0004" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0005">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0005" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0006">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0006" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0007">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0007" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0008">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0008" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_0009">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="0009" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_000a">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="000A" />
+    </patch>
+    <patch id="kz_texture_pack_matchmake_000b">
+        <memory offset="0x80000CCF" value="01" />
+        <memory offset="0x80000CD0" value="000B" />
+    </patch>
+    <patch id="kz_texture_pack_gct">
+        <file external="/codes/RMCE01.gct" disc="/codes/RMCE01.gct" create="true" />
+    </patch>
+    <patch id="kz_texture_pack_default_my_stuff">
+        <folder external="/kz_rtd/My Stuff" recursive="false"/>
+        <folder disc="/" external="/kz_rtd/My Stuff"/>
+    </patch>
+    <patch id="kz_texture_pack_ctgpr_my_stuff">
+        <folder external="/ctgpr/My Stuff" recursive="false"/>
+        <folder disc="/" external="/ctgpr/My Stuff"/>
+    </patch>
+</wiidisc>
