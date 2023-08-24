@@ -1,6 +1,6 @@
-#DISC_ID = RMCJ
+DISC_ID = RMCJ
 #DISC_ID = RMCE
-DISC_ID = RMCP
+#DISC_ID = RMCP
 #DISC_ID = RMCK
 
 # Get directory Makefile runs from

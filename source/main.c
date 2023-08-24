@@ -6,6 +6,7 @@
 #include "exception_handler_gct.h"
 #include "change_character_gct.h"
 #include "to_mkchannel_scene_hook.h"
+#include "strm_track_info_read_hook.h"
 
 #ifdef RMCP
 
@@ -379,6 +380,7 @@ void __main(void){
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
 
     installToMkchannelSceneHook();
+    installStrmTrackInfoReadHook();
 
     //by mdmwii
     //https://mariokartwii.com/showthread.php?tid=349
