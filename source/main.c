@@ -7,6 +7,7 @@
 #include "change_character_gct.h"
 #include "to_mkchannel_scene_hook.h"
 #include "strm_track_info_read_hook.h"
+#include "course_cache_load_hook.h"
 
 #ifdef RMCP
 
@@ -15,7 +16,6 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x805407f8
 #define LOAD_COURSE_PATCH2_ADDR 0x80540844
 #define LOAD_COURSE_PATCH3_ADDR 0x80540870
-#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x80541b58
 #define ORIGINAL_TRACK_NAME_TABLE 0x808b2d4c
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x8060a2b4
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x8060a2b8
@@ -50,7 +50,6 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x8053b2bc
 #define LOAD_COURSE_PATCH2_ADDR 0x8053b308
 #define LOAD_COURSE_PATCH3_ADDR 0x8053b334
-#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x8053c61c
 #define ORIGINAL_TRACK_NAME_TABLE 0x808ae69c
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x805e59e0
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x805e59e4
@@ -85,7 +84,6 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x80540178
 #define LOAD_COURSE_PATCH2_ADDR 0x805401C4
 #define LOAD_COURSE_PATCH3_ADDR 0x805401F0
-#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x805414d8
 #define ORIGINAL_TRACK_NAME_TABLE 0x808b2ae4
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x80609a28
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x80609a2C
@@ -269,9 +267,7 @@ void installRandomTexture(void){
     ICInvalidateRange((void*)LOAD_COURSE_PATCH2_ADDR, 4);
     injectC2Patch((void*)LOAD_COURSE_PATCH3_ADDR, get_load_course_hook_asm(), get_load_course_hook_asm_end());
     
-    //https://github.com/riidefi/mkw/blob/83186fbd1b12a05fc8539f6f0109b1318177778d/source/game/system/ResourceManager.cpp#L812C6-L812C17
-    u32ToBytes((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 0x4e800020);//blr disable course cache load
-    ICInvalidateRange((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 4);
+    installCourseCacheLoadHook();
     injectC2Patch((void*)CUSTOM_BRSTM_LOADER_PATCH_ADDR, get_custom_brstm_loader(), get_custom_brstm_loader_end());
 }
 
@@ -355,19 +351,23 @@ void setFlagsForNonRiivolution(void){
     return 1;
 }*/
 
-/*unsigned char isInTitleScreen(void){
+unsigned char isInTitleScreen(void){
     int sceneID = getSceneID();
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
     if(sceneID < 0x3F)return 0;
     if(sceneID > 0x43)return 0;
     return 1;
-}*/
+}
 
 void __main(void){
     ImperfectGch(exception_handler_gct);
     if(!myGlobalVarPtr){//allocate memory for our global variables
         myGlobalVarPtr = my_malloc(sizeof(myGlobalVarStruct));
     }
+    myGlobalVarPtr->disableCacheLoad = 0;
+
+    myGlobalVarPtr->lastSceneID = 0;
+    myGlobalVarPtr->courseCache = 0;
 
     myGlobalVarPtr->riivolutionLaunchTimer = -1;
 
@@ -432,13 +432,42 @@ void launchRiivolution(void){
     //OSLaunchTitle(0x0000000100000002);
 }
 
+void clearCourseCache(void){
+    if(!(myGlobalVarPtr->courseCache))return;
+    if(myGlobalVarPtr->courseCache->mState == 2){
+        MultiDvdArchive__clear(myGlobalVarPtr->courseCache->mpArchive);
+        myGlobalVarPtr->courseCache->mState = 0;
+    }
+    myGlobalVarPtr->courseCache = NULL;
+}
+
 void run_1fr(void){
+    unsigned int sceneID = getSceneID();
     if(!myGlobalVarPtr)return;
     myGlobalVarPtr->randomNumber++;
-    if(getSceneID())patchMatchMakeRegion();
+    if(sceneID)patchMatchMakeRegion();
+    //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるので毎フレームパッチしてそれを無効化する
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 476)launchRiivolution();
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
-    //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるので毎フレームパッチしてそれを無効化する
+    //https://wiki.tockdom.com/wiki/List_of_Identifiers
+    //キャッシュロードが発生したカウントをリセット
+    //if(sceneID == 0x68 || sceneID == 0x6F)myGlobalVarPtr->couresCacheloadCountOnline = 0;
+    if(sceneID == 0x68 || sceneID == 0x6C ||sceneID == 0x70 || sceneID == 0x71|| sceneID == 0x72 || sceneID == 0x73)myGlobalVarPtr->couresCacheloadCountOnline = 0;
+    //1Pオンラインだけキャッシュを有効化
+    //if(sceneID == 0x58 || sceneID == 0x59)myGlobalVarPtr->disableCacheLoad = 0;
+    if(sceneID == 0x55|| sceneID == 0x56 || sceneID == 0x57){
+        myGlobalVarPtr->disableCacheLoad = 0;
+    }
+    if(isInTitleScreen() || (sceneID < 0x58 && sceneID > 0x54)){
+        myGlobalVarPtr->couresCacheloadCountOnline = 0;
+        clearCourseCache();
+    }
+    if(isInTitleScreen()){
+        myGlobalVarPtr->disableCacheLoad = 1;
+    }
+    if(sceneID){
+        myGlobalVarPtr->lastSceneID = sceneID;
+    }
 }
 
 int getRandom(int max_plus_1){
@@ -451,14 +480,16 @@ int getRandom(int max_plus_1){
 void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
     //dest = buffer to write szs path
     if(!myGlobalVarPtr)return;
-    myGlobalVarPtr->slotID = slotID;
-    if(slotID >= COURSE_SLOT_MAX){
-        myGlobalVarPtr->determinedTextureHackIndex = 0;
-    }else{
-        if(myGlobalVarPtr->textureHackCount[slotID] < 2 || (!(myGlobalVarPtr->disableOriginalTracks))){
-            myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID]);
+    if(myGlobalVarPtr->disableCacheLoad){
+        myGlobalVarPtr->slotID = slotID;
+        if(slotID >= COURSE_SLOT_MAX){
+            myGlobalVarPtr->determinedTextureHackIndex = 0;
         }else{
-            myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID] - 1) + 1;
+            if(myGlobalVarPtr->textureHackCount[slotID] < 2 || (!(myGlobalVarPtr->disableOriginalTracks))){
+                myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID]);
+            }else{
+                myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID] - 1) + 1;
+            }
         }
     }
     if(myGlobalVarPtr->determinedTextureHackIndex == 0){//if it is 0, load nintendo track

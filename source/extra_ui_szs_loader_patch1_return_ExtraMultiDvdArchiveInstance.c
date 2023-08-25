@@ -1,3 +1,5 @@
+#include "common.h"
+
 #ifdef RMCJ
 
 #define NEW 0x80229cec
@@ -48,19 +50,6 @@ typedef struct{
     unsigned int mLanguage;
     unsigned char pad1[4352 - 0x60];
 }SystemManager;
-
-//https://github.com/riidefi/mkw/blob/454ba2d115b02af4462dd34b854573909b454722/source/game/system/MultiDvdArchive.hpp
-
-typedef struct{
-    void *vtable;
-    void* archives;
-    unsigned short archiveCount;
-    unsigned char pad0[2];
-    unsigned int *fileSizes;
-    char **suffixes;
-    void** fileStarts;
-    unsigned int *kinds;
-}MultiDvdArchive_Struct;
 
 //C++の内部仕様に近い仮想関数呼び出し (コードが長くなるので使用しない)
 /*void ExtraMultiDvdArchive__init(MultiDvdArchive_Struct *self){

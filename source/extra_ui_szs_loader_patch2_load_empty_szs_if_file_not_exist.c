@@ -1,15 +1,5 @@
 #include "empty_szs.h"
-
-typedef struct{
-    void *vtable;
-    void* archives;
-    unsigned short archiveCount;
-    unsigned char pad0[2];
-    unsigned int *fileSizes;
-    char **suffixes;
-    void** fileStarts;
-    unsigned int *kinds;
-}MultiDvdArchive_Struct;
+#include "common.h"
 
 typedef unsigned char bool;
 

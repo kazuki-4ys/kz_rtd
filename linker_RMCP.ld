@@ -27,4 +27,5 @@ SECTIONS
         bmg_func = 0x805f8cf0;
         IOS_Open = 0x801938f8;
         IOS_Close = 0x80193ad8;
+        MultiDvdArchive__clear = 0x8052ac40;
 }
