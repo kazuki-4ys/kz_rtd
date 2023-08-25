@@ -117,8 +117,8 @@ const char *texture_hack_course_base_path_with_szs = "/Race/Course/%02x_%d.szs";
 const char *texture_hack_course_base_d_path_with_szs = "/Race/Course/%02x_%d_d.szs";
 const char *texture_hack_course_base_path = "/Race/Course/%02x_%d";
 const char *texture_hack_course_base_d_path = "/Race/Course/%02x_%d_d";
-const char *original_course_base_path = "Race/Course/%s";
-const char *original_course_base_d_path = "Race/Course/%s_d";
+const char *original_course_base_path = "/Race/Course/%s";
+const char *original_course_base_d_path = "/Race/Course/%s_d";
 
 const char** COURSE_NAMES = (void*)ORIGINAL_TRACK_NAME_TABLE;
 
