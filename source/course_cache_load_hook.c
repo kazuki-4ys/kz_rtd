@@ -49,6 +49,8 @@ unsigned char getCourseCacheLoadHook1(void *self, unsigned int slotID){
                 myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID] - 1) + 1;
             }
         }
+        OSReport("[KZ-RTD]: special_slot: %02x\n", myGlobalVarPtr->slotID);
+        OSReport("[KZ-RTD]: variation_slot: %d\n", myGlobalVarPtr->determinedTextureHackIndex);
     }
     return 1;
 }

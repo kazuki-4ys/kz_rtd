@@ -29,4 +29,13 @@ SECTIONS
         IOS_Open = 0x80193818;
         IOS_Close = 0x801939f8;
         MultiDvdArchive__clear = 0x8052a5c0;
+        IOS_IoctlAsync = 0x80194078;
+        IOS_IoctlvAsync = 0x8019441c;
+        IOS_OpenAsync =  0x80193700;
+        IOS_CloseAsync = 0x80193938;
+        DCFlushRange = 0x801a154c;
+        VIResetDimmingCount = 0x801bafcc;
+        Egg__ExpHeap__create = 0x802269e8;
+        sSystem__Q23EGG10BaseSystem = 0x803868e0;
+        nw4r__ut__List_GetNext = 0x800af0a0;
 }

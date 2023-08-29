@@ -59,11 +59,41 @@ typedef struct{
     unsigned char disableCacheLoad;
     unsigned int lastSceneID;
     System__CourseCache_Struct *courseCache;
+    void *mem2Heap;
 }myGlobalVarStruct;
+
+typedef struct{
+    void* unk;
+    void* mMEM1ArenaLo;
+    void* mMEM1ArenaHi;
+    void* mMEM2ArenaLo;
+    void* mMEM2ArenaHi;
+    unsigned int mMemorySize;
+    void* mRootHeapMem1;
+    void* mRootHeapMem2; 
+}BaseSystem;
+
+typedef struct{
+    void* head;
+    void* tail;
+    unsigned short count;
+    unsigned short intrusion_offset;
+}nw4r__ut__List;
+
+//https://github.com/riidefi/mkw/blob/7f11b3ce7baf41e54aba301617a99a301feda118/source/egg/core/eggHeap.hpp
+typedef struct{
+    unsigned char unk[0x28];
+    nw4r__ut__List mChildren;
+    const char* mName;
+}Egg__Heap_Struct;
 
 extern myGlobalVarStruct *myGlobalVarPtr;
 extern const char** COURSE_NAMES;
+extern unsigned char canUseDevUsbVen;
 
+void memcpy(void*, void*, unsigned int);
+void *my_malloc(unsigned int length);
+void *my_malloc_mem2(unsigned int length);
 void injectC2Patch(void *targetAddr, void *codeStart, void *codeEnd);
 void u32ToBytes(unsigned char *mem, unsigned int val);
 unsigned int bytesToU32(unsigned char *mem);
@@ -76,5 +106,7 @@ void OSLaunchTitle(unsigned long long titleID);
 int IOS_Open(const char *path, int flags);
 void IOS_Close(int fd);
 void MultiDvdArchive__clear(MultiDvdArchive_Struct *self);
+void *Egg__ExpHeap__create(unsigned int, void*, unsigned int);
+void *nw4r__ut__List_GetNext(const nw4r__ut__List*, const void*);
 
 #endif//_COMMON_H_

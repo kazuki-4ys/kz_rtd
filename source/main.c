@@ -120,6 +120,7 @@ const char *original_course_base_d_path = "/Race/Course/%s_d";
 
 const char** COURSE_NAMES = (void*)ORIGINAL_TRACK_NAME_TABLE;
 
+BaseSystem* sSystem__Q23EGG10BaseSystem;
 myGlobalVarStruct *myGlobalVarPtr;
 
 void* getSystemHeap_e(void);
@@ -167,7 +168,31 @@ void *my_malloc(unsigned int length){
     #ifdef RMCP
     void *systemHeap = getSystemHeap_p();
     #endif
-    return Egg__Heap__Alloc(requsetLength, 0x20, systemHeap);
+    void *dest = Egg__Heap__Alloc(requsetLength, 0x20, systemHeap);
+    OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
+    return dest;
+}
+
+void prepareMem2Heap(void){
+    if(!myGlobalVarPtr->mem2Heap){
+        BaseSystem* bs = sSystem__Q23EGG10BaseSystem;
+        Egg__Heap_Struct *rootHeap = bs->mRootHeapMem2;
+        Egg__Heap_Struct *child = nw4r__ut__List_GetNext(&(rootHeap->mChildren), NULL);
+        child = nw4r__ut__List_GetNext(&(rootHeap->mChildren), child);
+        myGlobalVarPtr->mem2Heap = Egg__ExpHeap__create(64 * 1024, child, 0);
+        OSReport("[KZ-RTD]: mem2Heap: 0x%08x\n", (unsigned int)((void*)myGlobalVarPtr->mem2Heap));
+    }
+}
+
+void *my_malloc_mem2(unsigned int length){
+    unsigned int requsetLength = length;
+    if(requsetLength & 0x1F){//0x20でアラインメント alignment for 0x20
+        requsetLength = ((requsetLength >> 5) + 1) << 5;
+    }
+    if(!myGlobalVarPtr->mem2Heap)prepareMem2Heap();
+    void *dest = Egg__Heap__Alloc(requsetLength, 0x20, myGlobalVarPtr->mem2Heap);
+    OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
+    return dest;
 }
 
 void u32ToBytes(unsigned char *mem, unsigned int val){
@@ -323,8 +348,8 @@ void setFlagsForNonRiivolution(void){
     myGlobalVarPtr->changeRegionColor = 1;
     myGlobalVarPtr->regionColor = 5;
     myGlobalVarPtr->useCtgpReplicaSom = 1;
-    myGlobalVarPtr->somDigit = 0;
-    myGlobalVarPtr->wiimmfiPatcher = 1;
+    myGlobalVarPtr->somDigit = 2;
+    myGlobalVarPtr->wiimmfiPatcher = 0;
     myGlobalVarPtr->unlockEverything = 1;
     myGlobalVarPtr->useRandomTexture = 1;
     myGlobalVarPtr->disableOriginalTracks = 1;
@@ -336,6 +361,15 @@ void setFlagsForNonRiivolution(void){
 
 /*unsigned char isDolphin(void){
     int fd = IOS_Open("/dev/dolphin", 0);
+    if(fd >= 0){
+        IOS_Close(fd);
+        return 1;
+    }
+    return 0;
+}*/
+
+/*unsigned char isIosSupportUsbHid(void){
+    int fd = IOS_Open("/dev/usb/hid", 0);
     if(fd >= 0){
         IOS_Close(fd);
         return 1;
@@ -364,6 +398,7 @@ void __main(void){
     if(!myGlobalVarPtr){//allocate memory for our global variables
         myGlobalVarPtr = my_malloc(sizeof(myGlobalVarStruct));
     }
+    myGlobalVarPtr->mem2Heap = 0;
     myGlobalVarPtr->disableCacheLoad = 0;
 
     myGlobalVarPtr->lastSceneID = 0;
@@ -376,9 +411,10 @@ void __main(void){
     applyRiivolutionFlags();
     //setFlagsForNonRiivolution();
     if(!(myGlobalVarPtr->changeMatchMakeRegion))myGlobalVarPtr->matchMakeRegion = defaultRegion;
+    patchMatchMakeRegion();
+    //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるのでパッチしてそれを無効化する
 
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
-
     installToMkchannelSceneHook();
     installStrmTrackInfoReadHook();
 
@@ -445,8 +481,6 @@ void run_1fr(void){
     unsigned int sceneID = getSceneID();
     if(!myGlobalVarPtr)return;
     myGlobalVarPtr->randomNumber++;
-    if(sceneID)patchMatchMakeRegion();
-    //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるので毎フレームパッチしてそれを無効化する
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 476)launchRiivolution();
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
@@ -491,6 +525,8 @@ void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
                 myGlobalVarPtr->determinedTextureHackIndex = getRandom(myGlobalVarPtr->textureHackCount[slotID] - 1) + 1;
             }
         }
+        OSReport("[KZ-RTD]: special_slot: %02x\n", myGlobalVarPtr->slotID);
+        OSReport("[KZ-RTD]: variation_slot: %d\n", myGlobalVarPtr->determinedTextureHackIndex);
     }
     if(myGlobalVarPtr->determinedTextureHackIndex == 0){//if it is 0, load nintendo track
         if(is_d_szs){
