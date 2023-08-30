@@ -484,20 +484,23 @@ void run_1fr(void){
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 476)launchRiivolution();
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
-    //キャッシュロードが発生したカウントをリセット
-    //if(sceneID == 0x68 || sceneID == 0x6F)myGlobalVarPtr->couresCacheloadCountOnline = 0;
+    //1PWi-Fiレース、バトル画面でキャッシュロードが発生したカウントをリセット
     if(sceneID == 0x68 || sceneID == 0x6C ||sceneID == 0x70 || sceneID == 0x71|| sceneID == 0x72 || sceneID == 0x73)myGlobalVarPtr->couresCacheloadCountOnline = 0;
-    //1Pオンラインだけキャッシュを有効化
-    //if(sceneID == 0x58 || sceneID == 0x59)myGlobalVarPtr->disableCacheLoad = 0;
-    if(sceneID == 0x55|| sceneID == 0x56 || sceneID == 0x57){
+    if(sceneID == 0x58 || sceneID == 0x59 || (sceneID > 0x5F && sceneID < 0x64)){
+        //1P投票画面でキャッシュ無効化フラグを折る
         myGlobalVarPtr->disableCacheLoad = 0;
     }
     if(isInTitleScreen() || (sceneID < 0x58 && sceneID > 0x54)){
+        //1PWi-Fi地球儀画面でキャッシュ無効化フラグを立てる
+        myGlobalVarPtr->disableCacheLoad = 1;
         myGlobalVarPtr->couresCacheloadCountOnline = 0;
         clearCourseCache();
     }
     if(isInTitleScreen()){
+        //タイトル画面でキャッシュ無効化フラグを立てる
         myGlobalVarPtr->disableCacheLoad = 1;
+        myGlobalVarPtr->couresCacheloadCountOnline = 0;
+        clearCourseCache();
     }
     if(sceneID){
         myGlobalVarPtr->lastSceneID = sceneID;
