@@ -8,6 +8,7 @@
 #include "to_mkchannel_scene_hook.h"
 #include "strm_track_info_read_hook.h"
 #include "course_cache_load_hook.h"
+#include "track_music_speed_up_on_final_lap.h"
 
 #ifdef RMCP
 
@@ -117,6 +118,8 @@ const char *texture_hack_course_base_path = "/Race/Course/%02x_%d";
 const char *texture_hack_course_base_d_path = "/Race/Course/%02x_%d_d";
 const char *original_course_base_path = "/Race/Course/%s";
 const char *original_course_base_d_path = "/Race/Course/%s_d";
+const char *additional_brstm_base_path = "/Sound/strm/%02x_%d.brstm";
+const char *additional_brstm_base_path_f = "/Sound/strm/%02x_%d_F.brstm";
 
 const char** COURSE_NAMES = (void*)ORIGINAL_TRACK_NAME_TABLE;
 
@@ -417,6 +420,8 @@ void __main(void){
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
     installToMkchannelSceneHook();
     installStrmTrackInfoReadHook();
+    myGlobalVarPtr->useTrackMusicSpeedUpOnFinalLap = 0;
+    installTrackMusicSpeedUpOnFinalLap();
 
     //by mdmwii
     //https://mariokartwii.com/showthread.php?tid=349
@@ -448,6 +453,11 @@ void __main(void){
         u32ToBytes((void*)UNLOCK_EVERY_THING_ADDR, 0x38600001);
         ICInvalidateRange((void*)UNLOCK_EVERY_THING_ADDR, 4);
     }
+}
+
+unsigned char dvdIsFileExist(const char *path){
+    if(DVDConvertPathToEntryNum(path) >= 0)return 1;
+    return 0;
 }
 
 unsigned char nandIsFileExist(const char *path){
@@ -514,6 +524,18 @@ int getRandom(int max_plus_1){
     return NETCalcCRC32((void*)(&(myGlobalVarPtr->randomNumber)), 4) % max_plus_1;
 }
 
+void checkUseTrackMusicSpeedUpOnFinalLap(void){
+    char tmpPath[0x40];
+    char tmpPath_f[0x40];
+    sprintf(tmpPath, additional_brstm_base_path, myGlobalVarPtr->slotID, myGlobalVarPtr->determinedTextureHackIndex);
+    sprintf(tmpPath_f, additional_brstm_base_path_f, myGlobalVarPtr->slotID, myGlobalVarPtr->determinedTextureHackIndex);
+    if(dvdIsFileExist(tmpPath) && !dvdIsFileExist(tmpPath_f)){
+        myGlobalVarPtr->useTrackMusicSpeedUpOnFinalLap = 1;
+    }else{
+        myGlobalVarPtr->useTrackMusicSpeedUpOnFinalLap = 0;
+    }
+}
+
 void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
     //dest = buffer to write szs path
     if(!myGlobalVarPtr)return;
@@ -530,6 +552,7 @@ void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
         }
         OSReport("[KZ-RTD]: special_slot: %02x\n", myGlobalVarPtr->slotID);
         OSReport("[KZ-RTD]: variation_slot: %d\n", myGlobalVarPtr->determinedTextureHackIndex);
+        checkUseTrackMusicSpeedUpOnFinalLap();
     }
     if(myGlobalVarPtr->determinedTextureHackIndex == 0){//if it is 0, load nintendo track
         if(is_d_szs){

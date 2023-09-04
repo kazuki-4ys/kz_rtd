@@ -31,3 +31,5 @@ Source code of [KZ-RTD](https://wiki.tockdom.com/wiki/KZ_Random_Texture_Distribu
 [Automatic BRSAR Patching](https://youtu.be/y2tOmsdoBjw) by Elias_.
 
 [BRSTM Fixup From Wrong Number Of Tracks](https://github.com/mkw-sp/mkw-sp/blob/debb1843a084c3a7a958c96d2348ce08ed86764e/payload/nw4r/snd/StrmFileReader.cc#L5) by stebler.
+
+[Track Music SpeedUp on Final Lap](https://mariokartwii.com/showthread.php?tid=1948) by Melg, MrBean and CLF78.

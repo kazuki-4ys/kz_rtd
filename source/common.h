@@ -38,7 +38,8 @@ typedef struct{
     int determinedTextureHackIndex;
     void *saveUILayoutControlForSom;
     unsigned char somDigit;
-    unsigned char isBrstmMulti;
+    unsigned char useTrackMusicSpeedUpOnFinalLap;
+    unsigned char skipSpeedUp;
 
     //これより上のメンバは弄らないこと(アセンブラソースによりハードコーディングされているため)
     //クソコードでごめんね
@@ -108,5 +109,6 @@ void IOS_Close(int fd);
 void MultiDvdArchive__clear(MultiDvdArchive_Struct *self);
 void *Egg__ExpHeap__create(unsigned int, void*, unsigned int);
 void *nw4r__ut__List_GetNext(const nw4r__ut__List*, const void*);
+void checkUseTrackMusicSpeedUpOnFinalLap(void);
 
 #endif//_COMMON_H_

@@ -51,6 +51,7 @@ unsigned char getCourseCacheLoadHook1(void *self, unsigned int slotID){
         }
         OSReport("[KZ-RTD]: special_slot: %02x\n", myGlobalVarPtr->slotID);
         OSReport("[KZ-RTD]: variation_slot: %d\n", myGlobalVarPtr->determinedTextureHackIndex);
+        checkUseTrackMusicSpeedUpOnFinalLap();
     }
     return 1;
 }

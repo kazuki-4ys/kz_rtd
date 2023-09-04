@@ -37,4 +37,7 @@ SECTIONS
         Egg__ExpHeap__create = 0x80226744;
         sSystem__Q23EGG10BaseSystem = 0x80382bd8;
         nw4r__ut__List_GetNext = 0x800af0e0;
+        RACEDATA = 0x809B8F68;
+        SubtractTimers = 0x808423FC;
+        trackMusicSpeedUpPatch4PlusCLwzAddr = 0x809BDC10;
 }
