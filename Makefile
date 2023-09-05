@@ -135,9 +135,29 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 
+ifeq ($(DISC_ID), RMCE)
+lecode-USA.bin: lecode-USA.rawcode
+lecode-USA.rawcode: lecode-USA.elf
+lecode-USA.elf: $(OFILES)
+else
+ifeq ($(DISC_ID), RMCP)
+lecode-PAL.bin: lecode-PAL.rawcode
+lecode-PAL.rawcode: lecode-PAL.elf
+lecode-PAL.elf: $(OFILES)
+else
+ifeq ($(DISC_ID), RMCJ)
 lecode-JAP.bin: lecode-JAP.rawcode
 lecode-JAP.rawcode: lecode-JAP.elf
 lecode-JAP.elf: $(OFILES)
+else
+ifeq ($(DISC_ID), RMCK)
+lecode-KOR.bin: lecode-KOR.rawcode
+lecode-KOR.rawcode: lecode-KOR.elf
+lecode-KOR.elf: $(OFILES)
+endif
+endif
+endif
+endif
 
 $(OFILES_SOURCES) : $(HFILES)
 

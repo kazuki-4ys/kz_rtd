@@ -41,7 +41,16 @@ def bytesToFile(buf, fileName):
 if __name__=="__main__":
     if len(sys.argv) > 3:
         sys.exit()
+    regionCode = 0x4A #J
+    if sys.argv[2][-7:] == "USA.bin":
+        regionCode = 0x45 #E
+    if sys.argv[2][-7:] == "PAL.bin":
+        regionCode = 0x50 #P
+    if sys.argv[2][-7:] == "KOR.bin":
+        regionCode = 0x4B #K
     baseBin = bytearray(fileToBytes(os.path.dirname(__file__) + "/template/lecode-JAP.bin"))[0:0x40]
     outPutBin = baseBin + fileToBytes(sys.argv[1])
     u32ToBytes(outPutBin, 0x14, len(outPutBin), False)
+    print(hex(regionCode))
+    outPutBin[0x1C] = regionCode
     bytesToFile(outPutBin, sys.argv[2])
