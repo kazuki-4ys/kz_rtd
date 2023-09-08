@@ -51,6 +51,5 @@ if __name__=="__main__":
     baseBin = bytearray(fileToBytes(os.path.dirname(__file__) + "/template/lecode-JAP.bin"))[0:0x40]
     outPutBin = baseBin + fileToBytes(sys.argv[1])
     u32ToBytes(outPutBin, 0x14, len(outPutBin), False)
-    print(hex(regionCode))
     outPutBin[0x1C] = regionCode
     bytesToFile(outPutBin, sys.argv[2])
