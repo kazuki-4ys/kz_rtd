@@ -452,12 +452,16 @@ void __main(void){
     patchMatchMakeRegion();
     //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるのでパッチしてそれを無効化する
 
-    if(isRealWiiU()){
+    //isRealWiiUは実機で呼ぶとなぜかクラッシュする
+
+    /*if(isRealWiiU()){
         //現在、Wiiリモコンの通信が切れると一切操作を受け付けなくなるバグがあるが、USB GCNアダプタに対応させた(実機WiiUのみ)
         //バグがあるのでコメントアウトするが、使用したい場合は下の行のコメントアウトを解除すること
-        //installPadHook();
+        installPadHook();
         OSReport("[KZ-RTD]: real WiiU console detected!!\n");
-    }
+    }*/
+
+    //installPadHook();
 
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
     installToMkchannelSceneHook();
