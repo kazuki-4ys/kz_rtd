@@ -110,5 +110,6 @@ void MultiDvdArchive__clear(MultiDvdArchive_Struct *self);
 void *Egg__ExpHeap__create(unsigned int, void*, unsigned int);
 void *nw4r__ut__List_GetNext(const nw4r__ut__List*, const void*);
 void checkUseTrackMusicSpeedUpOnFinalLap(void);
+int ISFS_Read(int fd, void *buffer, int length);
 
 #endif//_COMMON_H_

@@ -9,6 +9,7 @@
 #include "strm_track_info_read_hook.h"
 #include "course_cache_load_hook.h"
 #include "track_music_speed_up_on_final_lap.h"
+#include "pad_hook.h"
 
 #ifdef RMCP
 
@@ -130,6 +131,7 @@ void* getSystemHeap_e(void);
 void* getSystemHeap_p(void);
 void* getSystemHeap_j(void);
 void* Egg__Heap__Alloc(unsigned int, unsigned int, void*);
+void* Egg__Heap__Free(void* ptr, void *heap);
 void ICInvalidateRangeAsm(void*, unsigned int);
 int DVDConvertPathToEntryNum(const char*);
 void strncpy(char*, const char*, unsigned int);
@@ -174,6 +176,19 @@ void *my_malloc(unsigned int length){
     void *dest = Egg__Heap__Alloc(requsetLength, 0x20, systemHeap);
     OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
     return dest;
+}
+
+void my_free(void *ptr){
+    #ifdef RMCE
+    void *systemHeap = getSystemHeap_e();
+    #endif
+    #ifdef RMCJ
+    void *systemHeap = getSystemHeap_j();
+    #endif
+    #ifdef RMCP
+    void *systemHeap = getSystemHeap_p();
+    #endif
+    Egg__Heap__Free(ptr, systemHeap);
 }
 
 void prepareMem2Heap(void){
@@ -362,14 +377,34 @@ void setFlagsForNonRiivolution(void){
     }
 }
 
-/*unsigned char isDolphin(void){
+unsigned char isVWiiNand(void){
+    int fd = ISFS_Open("/title/00000001/00000002/content/title.tmd", 1);
+    if(fd < 1)return 0;
+    unsigned char *buf = my_malloc(0x1A0);
+    if(!buf){
+        ISFS_Close(fd);
+        return 0;
+    }
+    ISFS_Read(fd, buf, 0x1A0);
+    ISFS_Close(fd);
+    unsigned char result = buf[0x183];
+    my_free(buf);
+    return result;
+}
+
+unsigned char isDolphin(void){
     int fd = IOS_Open("/dev/dolphin", 0);
     if(fd >= 0){
         IOS_Close(fd);
         return 1;
     }
     return 0;
-}*/
+}
+
+unsigned char isRealWiiU(void){
+    if(!isDolphin() && isVWiiNand())return 1;
+    return 0;
+}
 
 /*unsigned char isIosSupportUsbHid(void){
     int fd = IOS_Open("/dev/usb/hid", 0);
@@ -417,6 +452,13 @@ void __main(void){
     patchMatchMakeRegion();
     //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるのでパッチしてそれを無効化する
 
+    if(isRealWiiU()){
+        //現在、Wiiリモコンの通信が切れると一切操作を受け付けなくなるバグがあるが、USB GCNアダプタに対応させた(実機WiiUのみ)
+        //バグがあるのでコメントアウトするが、使用したい場合は下の行のコメントアウトを解除すること
+        //installPadHook();
+        OSReport("[KZ-RTD]: real WiiU console detected!!\n");
+    }
+
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
     installToMkchannelSceneHook();
     installStrmTrackInfoReadHook();
@@ -439,7 +481,7 @@ void __main(void){
         *((unsigned char*)((void*)CHANGE_REGION_COLOR_ADDR)) = myGlobalVarPtr->regionColor;
     }
 
-    installExtraUISzsLoader();
+    if(myGlobalVarPtr->useCtgpReplicaSom)installExtraUISzsLoader();
     installExtendedSetAllMessage();
     injectC2Patch((void*)AUTO_BRSAR_PATCH_ADDR, get_auto_brsar_patch_asm(), get_auto_brsar_patch_asm_end());
     installExtendedRegionColor();

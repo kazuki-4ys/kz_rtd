@@ -40,4 +40,6 @@ SECTIONS
         RACEDATA = 0x809B8F68;
         SubtractTimers = 0x808423FC;
         trackMusicSpeedUpPatch4PlusCLwzAddr = 0x809BDC10;
+        Egg__Heap__Free = 0x80229800;
+        ISFS_Read = 0x8016b15c;
 }
