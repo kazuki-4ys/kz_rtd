@@ -4,8 +4,7 @@
 .global get_run_1fr_asm_end
 
 .macro defaultInstruction
-    lis r5, 0xCC01
-    #lbz r0, 0x51 (r3)
+    addi sp, sp, 16
 .endm
 
 .macro pushStack

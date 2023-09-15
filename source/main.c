@@ -11,9 +11,11 @@
 #include "track_music_speed_up_on_final_lap.h"
 #include "pad_hook.h"
 
+#define RIIV_LAUNCH_TIMER 0x90
+
 #ifdef RMCP
 
-#define RUN_1FR_HOOK 0x8016eac8
+#define RUN_1FR_HOOK 0x8016eb68
 #define CUSTOM_BRSTM_LOADER_PATCH_ADDR 0x8009e0bc
 #define LOAD_COURSE_PATCH1_ADDR 0x805407f8
 #define LOAD_COURSE_PATCH2_ADDR 0x80540844
@@ -47,7 +49,7 @@
 
 #ifdef RMCE
 
-#define RUN_1FR_HOOK 0x8016ea28
+#define RUN_1FR_HOOK 0x8016eac8
 #define CUSTOM_BRSTM_LOADER_PATCH_ADDR 0x8009e01c
 #define LOAD_COURSE_PATCH1_ADDR 0x8053b2bc
 #define LOAD_COURSE_PATCH2_ADDR 0x8053b308
@@ -81,7 +83,7 @@
 
 #ifdef RMCJ
 
-#define RUN_1FR_HOOK 0x8016e9E8
+#define RUN_1FR_HOOK 0x8016eA88
 #define CUSTOM_BRSTM_LOADER_PATCH_ADDR 0x8009DFDC
 #define LOAD_COURSE_PATCH1_ADDR 0x80540178
 #define LOAD_COURSE_PATCH2_ADDR 0x805401C4
@@ -537,7 +539,7 @@ void run_1fr(void){
     unsigned int sceneID = getSceneID();
     if(!myGlobalVarPtr)return;
     myGlobalVarPtr->randomNumber++;
-    if(myGlobalVarPtr->riivolutionLaunchTimer >= 476)launchRiivolution();
+    if(myGlobalVarPtr->riivolutionLaunchTimer >= RIIV_LAUNCH_TIMER)launchRiivolution();
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
     //1PWi-Fiレース、バトル画面でキャッシュロードが発生したカウントをリセット
