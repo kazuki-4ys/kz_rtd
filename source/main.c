@@ -12,6 +12,7 @@
 #include "pad_hook.h"
 
 #define RIIV_LAUNCH_TIMER 0x90
+#define PAD_HOOK_INSTALL_TIMER 30
 
 #ifdef RMCP
 
@@ -445,6 +446,8 @@ void __main(void){
     myGlobalVarPtr->courseCache = 0;
 
     myGlobalVarPtr->riivolutionLaunchTimer = -1;
+    myGlobalVarPtr->padHookInstallTimer = -1;
+    myGlobalVarPtr->alreadyInstalledPadHook = 0;
 
     unsigned char defaultRegion = *((unsigned char*)((void*)CHANGE_REGION_COLOR_ADDR));
 
@@ -539,6 +542,15 @@ void run_1fr(void){
     unsigned int sceneID = getSceneID();
     if(!myGlobalVarPtr)return;
     myGlobalVarPtr->randomNumber++;
+    //画面焼き付き防止機能を無効化
+    //VIResetDimmingCount();
+    if(myGlobalVarPtr->padHookInstallTimer == 0)checkDevUsbVen();
+    if(myGlobalVarPtr->padHookInstallTimer < 30 && myGlobalVarPtr->padHookInstallTimer > -1)myGlobalVarPtr->padHookInstallTimer++;
+    if(myGlobalVarPtr->padHookInstallTimer == 30 && (!myGlobalVarPtr->alreadyInstalledPadHook)){
+        myGlobalVarPtr->alreadyInstalledPadHook = 1;
+        //installPadHook();
+    }
+    if(myGlobalVarPtr->padHookInstallTimer < 0 && isInTitleScreen())myGlobalVarPtr->padHookInstallTimer = 0;
     if(myGlobalVarPtr->riivolutionLaunchTimer >= RIIV_LAUNCH_TIMER)launchRiivolution();
     if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
