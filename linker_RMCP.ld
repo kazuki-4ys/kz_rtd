@@ -42,4 +42,7 @@ SECTIONS
         trackMusicSpeedUpPatch4PlusCLwzAddr = 0x809C2850;
         Egg__Heap__Free = 0x80229B84;
         ISFS_Read = 0x8016b1fc;
+        UI__LayoutUIControl__setPicture = 0x8063e0f0;
+        UI__LayoutUIControl__setMiiPicture = 0x8063e3dc;
+        UI__LayoutUIControl__hasPictureSourcePane = 0x8063e328;
 }

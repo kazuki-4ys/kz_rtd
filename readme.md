@@ -35,3 +35,5 @@ Source code of [KZ-RTD](https://wiki.tockdom.com/wiki/KZ_Random_Texture_Distribu
 [Track Music SpeedUp on Final Lap](https://mariokartwii.com/showthread.php?tid=1948) by Melg, MrBean and CLF78.
 
 [USB GCN Adapter Support](https://github.com/Chadderz121/wup-028-bslug) by Chadderz.
+
+[mkw-sp](https://github.com/mkw-sp/mkw-sp) by mkw-sp contributors.

@@ -10,6 +10,7 @@
 #include "course_cache_load_hook.h"
 #include "track_music_speed_up_on_final_lap.h"
 #include "pad_hook.h"
+#include "set_mii_picture_hook.h"
 
 #define RIIV_LAUNCH_TIMER 0x90
 #define PAD_HOOK_INSTALL_TIMER 30
@@ -140,7 +141,6 @@ int DVDConvertPathToEntryNum(const char*);
 void strncpy(char*, const char*, unsigned int);
 int strlen(const char*);
 int strcmp(const char*, const char*);
-void sprintf(char*, const char*, ...);
 unsigned int NETCalcCRC32(void*, unsigned int);
 void *getRacedata(void);
 int getSceneID(void);
@@ -495,6 +495,7 @@ void __main(void){
     injectC2Patch((void*)AUTO_BRSAR_PATCH_ADDR, get_auto_brsar_patch_asm(), get_auto_brsar_patch_asm_end());
     installExtendedRegionColor();
     installChangeCharacterAndVehicleInBetweenRacesOnline();
+    installSetMiiPictureHook();
     if(myGlobalVarPtr->useRandomTexture)installRandomTexture();
     if(myGlobalVarPtr->useCtgpReplicaSom)installCtgpSomReplica();
     if(myGlobalVarPtr->wiimmfiPatcher)installWiimmfiPatcher();

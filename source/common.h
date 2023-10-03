@@ -90,6 +90,23 @@ typedef struct{
     const char* mName;
 }Egg__Heap_Struct;
 
+typedef struct {
+    unsigned char _00[0x68 - 0x00];
+    unsigned short name[10];
+    unsigned char _7c[0x94 - 0x7c];
+    unsigned int mii_id;
+    unsigned int console_id;
+    unsigned char _9c[0xb8 - 0x9c];
+}Mii;
+//https://github.com/mkw-sp/mkw-sp/blob/623553448a7760825909ed3f0748911751c7124b/payload/game/system/Mii.hh
+
+typedef struct{
+    void *vtable;
+    Mii **m_miis;
+    unsigned char _08[0x98 - 0x08];
+}UI__MiiGroup_Struct;
+//https://github.com/mkw-sp/mkw-sp/blob/623553448a7760825909ed3f0748911751c7124b/payload/game/ui/MiiGroup.hh
+
 extern myGlobalVarStruct *myGlobalVarPtr;
 extern const char** COURSE_NAMES;
 extern unsigned char canUseDevUsbVen;
@@ -114,5 +131,9 @@ void *nw4r__ut__List_GetNext(const nw4r__ut__List*, const void*);
 void checkUseTrackMusicSpeedUpOnFinalLap(void);
 int ISFS_Read(int fd, void *buffer, int length);
 void VIResetDimmingCount(void);
+void UI__LayoutUIControl__setPicture(void*, char*, char*);
+void UI__LayoutUIControl__setMiiPicture(void *self, char *targetPaneName, UI__MiiGroup_Struct *miis, unsigned int playedId, unsigned int r7);
+unsigned char UI__LayoutUIControl__hasPictureSourcePane(void *self, const char *pane);
+void sprintf(char*, const char*, ...);
 
 #endif//_COMMON_H_
