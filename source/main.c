@@ -22,6 +22,7 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x805407f8
 #define LOAD_COURSE_PATCH2_ADDR 0x80540844
 #define LOAD_COURSE_PATCH3_ADDR 0x80540870
+#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x80541b58
 #define ORIGINAL_TRACK_NAME_TABLE 0x808b3984
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x8060a2b4
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x8060a2b8
@@ -56,6 +57,7 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x8053b2bc
 #define LOAD_COURSE_PATCH2_ADDR 0x8053b308
 #define LOAD_COURSE_PATCH3_ADDR 0x8053b334
+#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x8053c61c
 #define ORIGINAL_TRACK_NAME_TABLE 0x808af134
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x805e59e0
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x805e59e4
@@ -90,6 +92,7 @@
 #define LOAD_COURSE_PATCH1_ADDR 0x80540178
 #define LOAD_COURSE_PATCH2_ADDR 0x805401C4
 #define LOAD_COURSE_PATCH3_ADDR 0x805401F0
+#define DISABLE_COURSE_CACHE_LOADER_ADDR 0x805414d8
 #define ORIGINAL_TRACK_NAME_TABLE 0x808b2ae4
 #define EXTENDED_REGION_COLOR_PATCH1_ADDR 0x80609a28
 #define EXTENDED_REGION_COLOR_PATCH2_ADDR 0x80609a2C
@@ -313,7 +316,9 @@ void installRandomTexture(void){
     ICInvalidateRange((void*)LOAD_COURSE_PATCH2_ADDR, 4);
     injectC2Patch((void*)LOAD_COURSE_PATCH3_ADDR, get_load_course_hook_asm(), get_load_course_hook_asm_end());
     
-    installCourseCacheLoadHook();
+    //installCourseCacheLoadHook();
+    u32ToBytes((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 0x4e800020);//blr
+    ICInvalidateRange((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 4);
     injectC2Patch((void*)CUSTOM_BRSTM_LOADER_PATCH_ADDR, get_custom_brstm_loader(), get_custom_brstm_loader_end());
 }
 
@@ -564,13 +569,13 @@ void run_1fr(void){
         //1PWi-Fi地球儀画面でキャッシュ無効化フラグを立てる
         myGlobalVarPtr->disableCacheLoad = 1;
         myGlobalVarPtr->couresCacheloadCountOnline = 0;
-        clearCourseCache();
+        //clearCourseCache();
     }
     if(isInTitleScreen()){
         //タイトル画面でキャッシュ無効化フラグを立てる
         myGlobalVarPtr->disableCacheLoad = 1;
         myGlobalVarPtr->couresCacheloadCountOnline = 0;
-        clearCourseCache();
+        //clearCourseCache();
     }
     if(sceneID){
         myGlobalVarPtr->lastSceneID = sceneID;
@@ -599,7 +604,7 @@ void checkUseTrackMusicSpeedUpOnFinalLap(void){
 void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
     //dest = buffer to write szs path
     if(!myGlobalVarPtr)return;
-    if(myGlobalVarPtr->disableCacheLoad){
+    /*if(myGlobalVarPtr->disableCacheLoad){*/
         myGlobalVarPtr->slotID = slotID;
         if(slotID >= COURSE_SLOT_MAX){
             myGlobalVarPtr->determinedTextureHackIndex = 0;
@@ -613,7 +618,7 @@ void load_course_hook(char *dest, unsigned int slotID, unsigned int is_d_szs){
         OSReport("[KZ-RTD]: special_slot: %02x\n", myGlobalVarPtr->slotID);
         OSReport("[KZ-RTD]: variation_slot: %d\n", myGlobalVarPtr->determinedTextureHackIndex);
         checkUseTrackMusicSpeedUpOnFinalLap();
-    }
+    /*}*/
     if(myGlobalVarPtr->determinedTextureHackIndex == 0){//if it is 0, load nintendo track
         if(is_d_szs){
             sprintf(dest, original_course_base_d_path, COURSE_NAMES[slotID]);
