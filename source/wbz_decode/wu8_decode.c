@@ -166,6 +166,7 @@ void decode_wu8(unsigned char *src, unsigned int srcSize, void *heap){
         }
         Egg__Heap__Free(origFile.data, origFile.heap);
     }
+    u8_archive_deinit_auto_add(&auto_add);
     // Algorithm 4
     for(unsigned int i = 1;i < allNodeCount;i++){
         char *fullPath;
