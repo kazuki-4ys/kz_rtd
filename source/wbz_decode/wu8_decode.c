@@ -166,7 +166,6 @@ void decode_wu8(unsigned char *src, unsigned int srcSize, void *heap){
         }
         Egg__Heap__Free(origFile.data, origFile.heap);
     }
-    u8_archive_deinit_auto_add(&auto_add);
     // Algorithm 4
     for(unsigned int i = 1;i < allNodeCount;i++){
         char *fullPath;
@@ -177,5 +176,6 @@ void decode_wu8(unsigned char *src, unsigned int srcSize, void *heap){
         if(u8_archive_is_file_exist_auto_add(&auto_add, fullPath))continue;
         for(unsigned int i = 0;i < fileSize;i++)*(file + i) = summaryKey ^ (*(file + i));
     }
+    u8_archive_deinit_auto_add(&auto_add);
     Egg__Heap__Free(tmpFullPath, heap);
 }
