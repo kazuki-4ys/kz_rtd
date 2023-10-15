@@ -11,6 +11,7 @@
 #include "track_music_speed_up_on_final_lap.h"
 #include "pad_hook.h"
 #include "set_mii_picture_hook.h"
+#include "wbz_decode/decode_szs_hook.h"
 
 #define RIIV_LAUNCH_TIMER 0x90
 #define PAD_HOOK_INSTALL_TIMER 30
@@ -137,13 +138,9 @@ myGlobalVarStruct *myGlobalVarPtr;
 void* getSystemHeap_e(void);
 void* getSystemHeap_p(void);
 void* getSystemHeap_j(void);
-void* Egg__Heap__Alloc(unsigned int, unsigned int, void*);
-void* Egg__Heap__Free(void* ptr, void *heap);
 void ICInvalidateRangeAsm(void*, unsigned int);
 int DVDConvertPathToEntryNum(const char*);
 void strncpy(char*, const char*, unsigned int);
-int strlen(const char*);
-int strcmp(const char*, const char*);
 unsigned int NETCalcCRC32(void*, unsigned int);
 void *getRacedata(void);
 int getSceneID(void);
@@ -206,6 +203,16 @@ void prepareMem2Heap(void){
         myGlobalVarPtr->mem2Heap = Egg__ExpHeap__create(64 * 1024, child, 0);
         OSReport("[KZ-RTD]: mem2Heap: 0x%08x\n", (unsigned int)((void*)myGlobalVarPtr->mem2Heap));
     }
+}
+
+void *my_malloc_from_heap(unsigned int length, void *heap){
+    unsigned int requsetLength = length;
+    if(requsetLength & 0x1F){//0x20でアラインメント alignment for 0x20
+        requsetLength = ((requsetLength >> 5) + 1) << 5;
+    }
+    void *dest = Egg__Heap__Alloc(requsetLength, 0x20, heap);
+    OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
+    return dest;
 }
 
 void *my_malloc_mem2(unsigned int length){
@@ -501,6 +508,7 @@ void __main(void){
     installExtendedRegionColor();
     installChangeCharacterAndVehicleInBetweenRacesOnline();
     installSetMiiPictureHook();
+    //installDvdArchiveDecompressHook();
     if(myGlobalVarPtr->useRandomTexture)installRandomTexture();
     if(myGlobalVarPtr->useCtgpReplicaSom)installCtgpSomReplica();
     if(myGlobalVarPtr->wiimmfiPatcher)installWiimmfiPatcher();

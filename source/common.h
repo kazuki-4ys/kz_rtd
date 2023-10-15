@@ -107,11 +107,21 @@ typedef struct{
 }UI__MiiGroup_Struct;
 //https://github.com/mkw-sp/mkw-sp/blob/623553448a7760825909ed3f0748911751c7124b/payload/game/ui/MiiGroup.hh
 
+typedef struct{
+    unsigned char unk0[0x34];
+    unsigned int length;
+    //0x38
+    unsigned char unk1[4];
+    //全部で0x3Cバイト
+} DVDFileInfo;
+
 extern myGlobalVarStruct *myGlobalVarPtr;
 extern const char** COURSE_NAMES;
 extern unsigned char canUseDevUsbVen;
 
 void memcpy(void*, void*, unsigned int);
+void* Egg__Heap__Alloc(unsigned int, unsigned int, void*);
+void* Egg__Heap__Free(void* ptr, void *heap);
 void *my_malloc(unsigned int length);
 void *my_malloc_mem2(unsigned int length);
 void injectC2Patch(void *targetAddr, void *codeStart, void *codeEnd);
@@ -135,5 +145,15 @@ void UI__LayoutUIControl__setPicture(void*, char*, char*);
 void UI__LayoutUIControl__setMiiPicture(void *self, char *targetPaneName, UI__MiiGroup_Struct *miis, unsigned int playedId, unsigned int r7);
 unsigned char UI__LayoutUIControl__hasPictureSourcePane(void *self, const char *pane);
 void sprintf(char*, const char*, ...);
+int DVDOpen(const char *fileName, DVDFileInfo *fileInfo);
+int DVDReadPrio(DVDFileInfo *fileInfo, void *addr, unsigned int length, unsigned int offset, unsigned int prio);
+int DVDClose(DVDFileInfo *fileInfo);
+void *my_malloc_from_heap(unsigned int length, void *heap);
+void *memset(void *s, int c, unsigned int n);
+int strlen(const char*);
+int strcmp(const char*, const char*);
+int memcmp(const void *buf1, const void *buf2, unsigned int count);
+unsigned int EGG__Decomp__getExpandSize(unsigned char *fileStart);
+void EGG__Decomp__decodeSZS(unsigned char* , unsigned char*);
 
 #endif//_COMMON_H_

@@ -37,7 +37,7 @@ include $(DEVKITPPC)/gamecube_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source_$(DISC_ID)
+SOURCES		:=	source source_$(DISC_ID) source/wbz_decode source/wbz_decode/libbz2
 DATA		:=	data data_$(DISC_ID)
 INCLUDES	:=
 

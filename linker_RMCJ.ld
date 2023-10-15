@@ -46,4 +46,10 @@ SECTIONS
         UI__LayoutUIControl__setPicture = 0x8063d75c;
         UI__LayoutUIControl__setMiiPicture = 0x8063da48;
         UI__LayoutUIControl__hasPictureSourcePane = 0x8063d994;
+        DVDOpen = 0x8015e1dc;
+        DVDReadPrio = 0x8015E754;
+        DVDClose = 0x8015e488;
+        memset = 0x80006038;
+        EGG__Decomp__getExpandSize = 0x8021989c;
+        EGG__Decomp__decodeSZS = 0x80218b4c;
 }
