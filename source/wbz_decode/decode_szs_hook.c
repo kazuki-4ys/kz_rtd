@@ -1,6 +1,7 @@
 #include "decode_szs_hook.h"
 #include "wu8_decode.h"
 #include "libbz2/bzlib.h"
+#include "liblzma/LzmaDec.h"
 
 #ifdef RMCP
 
@@ -49,16 +50,39 @@ unsigned int DvdArchiveDecompressHook1(unsigned char *fileStart){
 }
 
 void decompressBz2(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap);
+void decompressLzma(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap);
 
 void DvdArchiveDecompressHook2(unsigned char* mFileStart, unsigned char *archive, unsigned int archiveSize, unsigned int mFileSize, void *heap){
     //replace here.
     //https://github.com/riidefi/mkw/blob/master/source/game/system/DvdArchive.cpp#L224
     if(!memcmp(mFileStart, "Yaz0", 4))EGG__Decomp__decodeSZS(mFileStart, archive);
     if(!memcmp(mFileStart, "WBZa", 4))decompressBz2(mFileStart + 0x10, mFileSize - 0x10, archive, *((unsigned int*)((void*)(mFileStart + 0xC))), heap);
+    if(!memcmp(mFileStart, "WLZa", 4))decompressLzma(mFileStart + 0x10, mFileSize - 0x10, archive, *((unsigned int*)((void*)(mFileStart + 0xC))), heap);
     if(!memcmp(archive, "WU8a", 4))decode_wu8(archive, archiveSize, heap);
 }
 
 void decompressBz2(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap){
     bzHeap = heap;
     bz_internal_error(BZ2_bzBuffToBuffDecompress((void*)dest, &destSize, (void*)src, srcSize, 0, 4));
+}
+
+void *lzmaHeap;
+
+void* my_lzma_malloc(void *p, unsigned int size){
+    return my_malloc_from_heap(size, lzmaHeap);
+}
+
+void my_lzma_free(void *p, void *ptr){
+    Egg__Heap__Free(ptr, lzmaHeap);
+}
+
+void decompressLzma(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap){
+    lzmaHeap = heap;
+    ELzmaStatus status;
+    ISzAlloc isza;
+    isza.Alloc = (void*)my_lzma_malloc;
+    isza.Free = (void*)my_lzma_free;
+    srcSize = srcSize - 13;
+    int ret = (int)LzmaDecode((Byte*)dest, (SizeT*)(&destSize), (Byte*)(src + 13), (SizeT*)(&srcSize), (Byte*)src, 5, LZMA_FINISH_END, &status, &isza);
+    if(ret != SZ_OK)OSReport("[KZ-RTD]: decompressLzma ret = %d\n", ret);
 }
