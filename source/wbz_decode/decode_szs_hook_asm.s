@@ -21,6 +21,10 @@
 
 dvd_archive_decompress_hook1_asm:
 pushStack
+lwz r4, 0x1C (r28)
+lwz r5, 0x18 (r28)
+#r4 = heap
+#r5 = mFileSize
 bl DvdArchiveDecompressHook1
 stw r3, -4 (sp)
 popStack
@@ -31,14 +35,16 @@ dvd_archive_decompress_hook1_asm_end:
 
 dvd_archive_decompress_hook2_asm:
 pushStack
-mr r5, r31
-lwz r6, 0x18 (r28)
-lwz r7, 0x1C (r28)
-#r5 = archiveSize
-#r6 = mFileSize
-#r7 = heap
 bl DvdArchiveDecompressHook2
+stw r3, -4 (sp)
 popStack
+lwz r12, -0x84 (sp)
+cmpwi r12, 0
+beq skip_blr
+mr r3, r12
+blr
+skip_blr:
+stwu sp, -0x10 (sp)
 .long 0
 .long 0
 dvd_archive_decompress_hook2_asm_end:
