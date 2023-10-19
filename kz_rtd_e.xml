@@ -152,10 +152,12 @@
     </patch>
     <patch id="kz_texture_pack_texture">
         <memory offset="0x80000CC4" value="01" />
+        <file external="/rk_dumper/auto-add.arc" disc="/Race/Course/auto-add.arc" create="true" />
     </patch>
      <patch id="kz_texture_pack_texture_disable_nintendo">
         <memory offset="0x80000CC4" value="01" />
         <memory offset="0x80000CC5" value="01" />
+        <file external="/rk_dumper/auto-add.arc" disc="/Race/Course/auto-add.arc" create="true" />
     </patch>
     <patch id="kz_texture_pack_wiimmfi">
         <memory offset="0x80000CC6" value="01" />
