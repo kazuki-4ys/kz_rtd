@@ -12,6 +12,7 @@
 #include "pad_hook.h"
 #include "set_mii_picture_hook.h"
 #include "wbz_decode/decode_szs_hook.h"
+#include "auto_add_not_found_msg_jpn_bin.h"
 
 #define RIIV_LAUNCH_TIMER 0x90
 #define PAD_HOOK_INSTALL_TIMER 30
@@ -131,6 +132,7 @@ const char *additional_brstm_base_path = "/Sound/strm/%02x_%d.brstm";
 const char *additional_brstm_base_path_f = "/Sound/strm/%02x_%d_F.brstm";
 
 const char** COURSE_NAMES = (void*)ORIGINAL_TRACK_NAME_TABLE;
+const char *AUTO_ADD_NOT_FOUND_MSG = "sd:/rk_dumper/auto-add.arc is not exist.\n\nPlease run RevoKart Dumper first.\nhttps://github.com/kazuki-4ys/RevoKart_Dumper/releases\n\n\n\n                                                                                  - kazuki_4ys\n";
 
 BaseSystem* sSystem__Q23EGG10BaseSystem;
 myGlobalVarStruct *myGlobalVarPtr;
@@ -211,7 +213,7 @@ void *my_malloc_from_heap(unsigned int length, void *heap){
         requsetLength = ((requsetLength >> 5) + 1) << 5;
     }
     void *dest = Egg__Heap__Alloc(requsetLength, 0x20, heap);
-    OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
+    //OSReport("[KZ-RTD]: memory allocated at: 0x%08x\n", dest);
     return dest;
 }
 
@@ -465,6 +467,17 @@ void __main(void){
 
     applyRiivolutionFlags();
     //setFlagsForNonRiivolution();
+
+    if(DVDConvertPathToEntryNum("/Race/Course/auto-add.arc") < 0 && myGlobalVarPtr->useRandomTexture == 1){
+        unsigned int col = 0xE0E0E0FF;
+        unsigned int col2 = 0x003000FF;
+        if(*((unsigned char*)((void*)0x80005F27)) == 0x10){
+            OSFatal(&col, &col2, auto_add_not_found_msg_jpn_bin);
+        }else{
+            OSFatal(&col, &col2, AUTO_ADD_NOT_FOUND_MSG);
+        }
+    }
+
     if(!(myGlobalVarPtr->changeMatchMakeRegion))myGlobalVarPtr->matchMakeRegion = defaultRegion;
     patchMatchMakeRegion();
     //Wiimmfiの謎パッチにより、リージョンカラーを変更すると国内マッチリージョンまで変わるのでパッチしてそれを無効化する
@@ -561,6 +574,7 @@ void run_1fr(void){
     if(myGlobalVarPtr->padHookInstallTimer < 30 && myGlobalVarPtr->padHookInstallTimer > -1)myGlobalVarPtr->padHookInstallTimer++;
     if(myGlobalVarPtr->padHookInstallTimer == 30 && (!myGlobalVarPtr->alreadyInstalledPadHook)){
         myGlobalVarPtr->alreadyInstalledPadHook = 1;
+        if(myGlobalVarPtr->useRandomTexture == 1)installDvdArchiveDecompressHook();
         //installPadHook();
     }
     if(myGlobalVarPtr->padHookInstallTimer < 0 && isInTitleScreen())myGlobalVarPtr->padHookInstallTimer = 0;

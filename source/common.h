@@ -155,5 +155,6 @@ int strcmp(const char*, const char*);
 int memcmp(const void *buf1, const void *buf2, unsigned int count);
 unsigned int EGG__Decomp__getExpandSize(unsigned char *fileStart);
 void EGG__Decomp__decodeSZS(unsigned char* , unsigned char*);
+void OSFatal(unsigned int *strCol, unsigned int *bgCol, const char *str);
 
 #endif//_COMMON_H_

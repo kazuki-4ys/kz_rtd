@@ -52,4 +52,5 @@ SECTIONS
         memset = 0x80006038;
         EGG__Decomp__getExpandSize = 0x8021989c;
         EGG__Decomp__decodeSZS = 0x80218b4c;
+        OSFatal = 0x801a4de4;
 }
