@@ -47,7 +47,9 @@ void getFullPath_rec(u8_archive *src, unsigned int targetNodeIndex, char *destPa
         parentNodeIndex = targetNodeIndex - 1;
         while(1){
             parentNode = firstNode + parentNodeIndex;
-            if((parentNode->fileNameOffset & 0x01000000) == 0x01000000)break;
+            if((parentNode->fileNameOffset & 0x01000000) == 0x01000000){
+                if(parentNode->fileDataLength > targetNodeIndex)break;
+            }
             if(!parentNodeIndex)break;
             parentNodeIndex--;
         }
@@ -155,7 +157,6 @@ void decode_wu8(unsigned char *src, unsigned int srcSize, void *heap){
         unsigned int fileSize = (firstNode + i)->fileDataLength;
         unsigned char *file = src + (firstNode + i)->fileDataOffset;
         fullPath = u8_get_full_path(&src_wu8, i, tmpFullPath);
-        //OSReport("%s\n", fullPath);
         if(!u8_archive_is_file_exist_auto_add(&auto_add, fullPath))continue;
         u8_archive_get_file_auto_add(&auto_add, fullPath, &origFile);
         // Algorithm 3
