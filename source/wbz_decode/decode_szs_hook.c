@@ -63,7 +63,15 @@ void decompressLzma(unsigned char *src, unsigned int srcSize, unsigned char *des
 unsigned int DvdArchiveDecompressHook2(unsigned char* src, unsigned char *dest){
     //replace here.
     //https://github.com/riidefi/mkw/blob/40c587abb0bb386532aaf038e290524c86ab4c1f/source/egg/core/eggDecomp.cpp#L35
-    if(!memcmp(src, "Yaz0", 4)){
+    if(!memcmp(src, "Yaz", 3)){
+        if(!memcmp(src + 0x10, "\x42\x5a\x68", 3)){
+            decompressBz2(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), decodeSzsHeap);
+            return *((unsigned int*)((void*)(src + 0x4)));
+        }
+        if(!memcmp(src + 0x10, "\x5d\x00\x00", 3)){
+            decompressLzma(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), decodeSzsHeap);
+            return *((unsigned int*)((void*)(src + 0x4)));
+        }
         return 0;
     }
     if(!memcmp(src, "WBZa", 4))decompressBz2(src + 0x10, srcSize - 0x10, dest, *((unsigned int*)((void*)(src + 0xC))), decodeSzsHeap);
@@ -78,7 +86,7 @@ void decompressBz2(unsigned char *src, unsigned int srcSize, unsigned char *dest
 }
 
 int EGG__Decomp__getExpandSize_Replace(unsigned char *src){
-    if(!memcmp(src, "Yaz0", 4)){
+    if(!memcmp(src, "Yaz", 3)){
         return *((unsigned int*)((void*)(src + 4)));
     }
     //Assume that this is wbz or wlz.

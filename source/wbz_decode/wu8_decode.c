@@ -1,11 +1,31 @@
 #include "wu8_decode.h"
 
+const char *AUTO_ADD_NOT_FOUND_MSG = "sd:/rk_dumper/auto-add.arc is not exist.\n\nPlease run RevoKart Dumper first.\nhttps://github.com/kazuki-4ys/RevoKart_Dumper/releases\n\n\n\n                                                                                  - kazuki_4ys\n";
+
 #define U8_MAGIC 0x55AA382D
+
+void printAutoAddNotExsistMessage(void){
+    unsigned int col = 0xE0E0E0FF;
+    unsigned int col2 = 0x003000FF;
+    if(*((unsigned char*)((void*)0x80005F27)) == 0x10){
+        OSFatal(&col, &col2, auto_add_not_found_msg_jpn_bin);
+    }else{
+        OSFatal(&col, &col2, AUTO_ADD_NOT_FOUND_MSG);
+    }
+    return;
+}
 
 void u8_archive_init_auto_add(u8_archive *src, const char *path, void *heap){
     src->heap = heap;
     src->nodeAndStringTable = NULL;
-    if(!DVDOpen(path, &(src->fi)))return;
+    if(!DVDOpen(path, &(src->fi))){
+        printAutoAddNotExsistMessage();
+        return;
+    }
+    if(!(src->fi.length)){
+        printAutoAddNotExsistMessage();
+        return;
+    }
     void *tmpHeader = my_malloc_from_heap(0x10, heap);
     DVDReadPrio(&(src->fi), tmpHeader, 0x10, 0, 2);
     memcpy(&(src->header), tmpHeader, 0x10);

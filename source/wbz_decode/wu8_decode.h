@@ -2,6 +2,7 @@
 #define _WU8_DECODE_H_
 
 #include "../common.h"
+#include "auto_add_not_found_msg_jpn_bin.h"
 
 #define U8_MAGIC 0x55AA382D
 #define U8_NODE_SIZE 0xC
