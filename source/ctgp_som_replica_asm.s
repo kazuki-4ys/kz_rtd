@@ -175,7 +175,7 @@ bl blTrickCommonEnd
 ctgp_som_replica_patch4:
 
 
-.set region, 'P'
+.set region, REGION_ID
 
 .if (region == 'P')
     .set ptr_raceData, 0x809bd728

@@ -1,6 +1,6 @@
 #include <ppc-asm.h>
 
-.set region, 'P'
+.set region, REGION_ID
 
 .if    (region == 'E' || region == 'e') # RMCE
          .set menu_pointer, 0x809CD508

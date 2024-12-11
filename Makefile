@@ -1,7 +1,23 @@
 #DISC_ID = RMCJ
-DISC_ID = RMCE
-#DISC_ID = RMCP
+#DISC_ID = RMCE
+DISC_ID = RMCP
 #DISC_ID = RMCK
+
+ifeq ($(DISC_ID), RMCE)
+ASM_DISC_ID_DEF = "REGION_ID=0x45"
+else
+ifeq ($(DISC_ID), RMCP)
+ASM_DISC_ID_DEF = "REGION_ID=0x50"
+else
+ifeq ($(DISC_ID), RMCJ)
+ASM_DISC_ID_DEF = "REGION_ID=0x4A"
+else
+ifeq ($(DISC_ID), RMCK)
+ASM_DISC_ID_DEF = "REGION_ID=0x4B"
+endif
+endif
+endif
+endif
 
 # Get directory Makefile runs from
 ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -47,6 +63,7 @@ INCLUDES	:=
 
 CFLAGS		= -g -Og -Wall $(MACHDEP) $(INCLUDE) -ffunction-sections -fno-builtin -nodefaultlibs -nostdlib -nostartfiles -D$(DISC_ID)
 CXXFLAGS	= $(CFLAGS)
+ASFLAGS		= -D$(ASM_DISC_ID_DEF)
 
 LDFLAGS		= -g $(MACHDEP) -Wl,-Map,$(notdir $@).map -nostartfiles -T $(ROOT_DIR)/linker_$(DISC_ID).ld
 
