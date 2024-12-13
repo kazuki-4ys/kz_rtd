@@ -1,6 +1,6 @@
 #include "wu8_decode.h"
 
-const char *AUTO_ADD_NOT_FOUND_MSG = "sd:/rk_dumper/auto-add.arc is not exist.\n\nPlease run RevoKart Dumper first.\nhttps://github.com/kazuki-4ys/RevoKart_Dumper/releases\n\n\n\n                                                                                  - kazuki_4ys\n";
+const char *AUTO_ADD_NOT_FOUND_MSG = "sd:/rk_dumper/auto-add.arc does not exist.\n\nPlease run RevoKart Dumper first.\nhttps://github.com/kazuki-4ys/RevoKart_Dumper/releases\n\n\n\n                                                                                  - kazuki_4ys\n";
 
 #define U8_MAGIC 0x55AA382D
 
