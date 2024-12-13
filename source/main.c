@@ -5,7 +5,6 @@
 #include "wiimmfi_gct.h"
 #include "exception_handler_gct.h"
 #include "change_character_gct.h"
-#include "to_mkchannel_scene_hook.h"
 #include "strm_track_info_read_hook.h"
 #include "course_cache_load_hook.h"
 #include "track_music_speed_up_on_final_lap.h"
@@ -13,8 +12,8 @@
 #include "set_mii_picture_hook.h"
 #include "wbz_decode/decode_szs_hook.h"
 #include "anti_laglate_start.h"
+#include "riivolution_launcher.h"
 
-#define RIIV_LAUNCH_TIMER 0x90
 #define PAD_HOOK_INSTALL_TIMER 30
 
 #ifdef RMCP
@@ -144,7 +143,6 @@ int DVDConvertPathToEntryNum(const char*);
 void strncpy(char*, const char*, unsigned int);
 unsigned int NETCalcCRC32(void*, unsigned int);
 void *getRacedata(void);
-int getSceneID(void);
 
 void *get_run_1fr_asm(void);
 void *get_run_1fr_asm_end(void);
@@ -482,9 +480,8 @@ void __main(void){
 
     //installPadHook();
     installAntilagLateStart();
-
+    installRiivolutionLauncher();
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
-    installToMkchannelSceneHook();
     installStrmTrackInfoReadHook();
     myGlobalVarPtr->useTrackMusicSpeedUpOnFinalLap = 0;
     installTrackMusicSpeedUpOnFinalLap();
@@ -528,24 +525,6 @@ unsigned char dvdIsFileExist(const char *path){
     return 0;
 }
 
-unsigned char nandIsFileExist(const char *path){
-    int fd = ISFS_Open(path, 1);
-    if(fd >= 0){
-        ISFS_Close(fd);
-        return 1;
-    }
-    return 0;
-}
-
-void launchRiivolution(void){
-    if(nandIsFileExist("/title/00010001/52494956/content/title.tmd")){
-        OSLaunchTitle(0x0001000152494956);
-    }else{
-        OSLaunchTitle(0x0000000100000002);
-    }
-    //OSLaunchTitle(0x0000000100000002);
-}
-
 void clearCourseCache(void){
     if(!(myGlobalVarPtr->courseCache))return;
     if(myGlobalVarPtr->courseCache->mState == 2){
@@ -568,8 +547,6 @@ void run_1fr(void){
         //installPadHook();
     }
     if(myGlobalVarPtr->padHookInstallTimer < 0 && isInTitleScreen())myGlobalVarPtr->padHookInstallTimer = 0;
-    if(myGlobalVarPtr->riivolutionLaunchTimer >= RIIV_LAUNCH_TIMER)launchRiivolution();
-    if(myGlobalVarPtr->riivolutionLaunchTimer >= 0)myGlobalVarPtr->riivolutionLaunchTimer++;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
     //1PWi-Fiレース、バトル画面でキャッシュロードが発生したカウントをリセット
     if(sceneID == 0x68 || sceneID == 0x6C ||sceneID == 0x70 || sceneID == 0x71|| sceneID == 0x72 || sceneID == 0x73)myGlobalVarPtr->couresCacheloadCountOnline = 0;
