@@ -12,6 +12,7 @@
 #include "pad_hook.h"
 #include "set_mii_picture_hook.h"
 #include "wbz_decode/decode_szs_hook.h"
+#include "anti_laglate_start.h"
 
 #define RIIV_LAUNCH_TIMER 0x90
 #define PAD_HOOK_INSTALL_TIMER 30
@@ -480,6 +481,7 @@ void __main(void){
     }*/
 
     //installPadHook();
+    installAntilagLateStart();
 
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
     installToMkchannelSceneHook();
