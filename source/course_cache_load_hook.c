@@ -31,6 +31,8 @@ void installCourseCacheLoadHook(void){
     injectC2Patch((void*)PATCH2_ADDR, get_course_cache_load_hook_asm_2(), get_course_cache_load_hook_asm_2_end());
 }
 
+int getRandom(int max_plus_1);
+
 unsigned char getCourseCacheLoadHook1(void *self, unsigned int slotID){
     //replace here
     //https://github.com/riidefi/mkw/blob/83186fbd1b12a05fc8539f6f0109b1318177778d/source/game/system/ResourceManager.cpp#L812

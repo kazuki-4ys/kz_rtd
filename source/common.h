@@ -61,8 +61,6 @@ typedef struct{
     unsigned int lastSceneID;
     System__CourseCache_Struct *courseCache;
     void *mem2Heap;
-    int padHookInstallTimer;
-    unsigned char alreadyInstalledPadHook;
 }myGlobalVarStruct;
 
 typedef struct{
@@ -125,16 +123,18 @@ void* Egg__Heap__Free(void* ptr, void *heap);
 void *my_malloc(unsigned int length);
 void *my_malloc_mem2(unsigned int length);
 void injectC2Patch(void *targetAddr, void *codeStart, void *codeEnd);
+void injectBranch(void *target, void *src, bool link);
 void u32ToBytes(unsigned char *mem, unsigned int val);
 unsigned int bytesToU32(unsigned char *mem);
 void ICInvalidateRange(void *_start, unsigned int length);
+void DCFlushRange(void *_start, unsigned int length);
+void clear_DC_IC_Cache(void *ptr, unsigned int size);
 void OSReport(const char*, ...);
 void memcpy(void*, void*, unsigned int);
+void *memmove(void *dest, const void *src, unsigned int n);
 int ISFS_Open(const char* path, int flag);
 void ISFS_Close(int fd);
 void OSLaunchTitle(unsigned long long titleID);
-int IOS_Open(const char *path, int flags);
-void IOS_Close(int fd);
 void MultiDvdArchive__clear(MultiDvdArchive_Struct *self);
 void *Egg__ExpHeap__create(unsigned int, void*, unsigned int);
 void *nw4r__ut__List_GetNext(const nw4r__ut__List*, const void*);

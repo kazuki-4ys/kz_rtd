@@ -1,11 +1,6 @@
 #include "empty_szs.h"
 #include "common.h"
 
-typedef unsigned char bool;
-
-#define true 1
-#define false 0
-
 //https://github.com/riidefi/mkw/blob/454ba2d115b02af4462dd34b854573909b454722/source/game/system/MultiDvdArchive.cpp#L139
 
 int DVDConvertPathToEntryNum(const char*);

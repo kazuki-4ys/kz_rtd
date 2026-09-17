@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ipc.h"
 #include "extend_set_all_message.h"
 #include "ctgp_som_replica.h"
 #include "imperfect_gch.h"
@@ -8,11 +9,11 @@
 #include "strm_track_info_read_hook.h"
 #include "course_cache_load_hook.h"
 #include "track_music_speed_up_on_final_lap.h"
-#include "pad_hook.h"
 #include "set_mii_picture_hook.h"
 #include "wbz_decode/decode_szs_hook.h"
 #include "anti_laglate_start.h"
 #include "riivolution_launcher.h"
+#include "wup_028.h"
 
 #define PAD_HOOK_INSTALL_TIMER 30
 
@@ -138,7 +139,6 @@ myGlobalVarStruct *myGlobalVarPtr;
 void* getSystemHeap_e(void);
 void* getSystemHeap_p(void);
 void* getSystemHeap_j(void);
-void ICInvalidateRangeAsm(void*, unsigned int);
 int DVDConvertPathToEntryNum(const char*);
 void strncpy(char*, const char*, unsigned int);
 unsigned int NETCalcCRC32(void*, unsigned int);
@@ -236,18 +236,9 @@ unsigned int bytesToU32(unsigned char *mem){
     return (*mem << 24) | (*(mem + 1) << 16) | (*(mem + 2) << 8) | *(mem + 3);
 }
 
-void ICInvalidateRange(void *_start, unsigned int length){
-    //CPUのキャッシュメモリを更新し、過去にキャッシュされたコードの実行を防ぐ？
-    //_start とlengthを0x20でアラインメント alignment for 0x20
-    unsigned int start = (unsigned int)_start;
-    unsigned int end = start + length;
-    if(end & 0x1F){
-        end = ((end >> 5) + 1) << 5;
-    }
-    if(start & 0x1F){
-        start = (start >> 5) << 5;
-    }
-    ICInvalidateRangeAsm((void*)start, end - start);
+void clear_DC_IC_Cache(void *ptr, unsigned int size){
+    DCFlushRange(ptr, size);
+    ICInvalidateRange(ptr, size);
 }
 
 unsigned int makeBranchInstructionByAddrDelta(int addrDelta){//アドレス差分からbranch命令作成
@@ -261,20 +252,21 @@ unsigned int makeBranchInstructionByAddrDelta(int addrDelta){//アドレス差�
     return instruction;
 }
 
-void injectBranch(void *target, void *src){
+void injectBranch(void *target, void *src, bool link){
     //srcからtargetへジャンプ
     //branch to src from target
     unsigned int instruction = makeBranchInstructionByAddrDelta((int)target - (int)src);
+    if(link)instruction = instruction | 1;
     u32ToBytes((void*)src, instruction);
-    ICInvalidateRange((void*)src, 4);
+    clear_DC_IC_Cache((void*)src, 4);
 }
 
 void injectC2Patch(void *targetAddr, void *codeStart, void *codeEnd){
     //inject code like C2 code type
     if(codeEnd)u32ToBytes((unsigned char*)codeEnd - 8, makeBranchInstructionByAddrDelta((unsigned int)targetAddr + 4 - ((unsigned int)codeEnd - 8)));
     u32ToBytes(targetAddr, makeBranchInstructionByAddrDelta(codeStart - targetAddr));
-    if(codeEnd)ICInvalidateRange((void*)((unsigned int)codeEnd - 8), 4);
-    ICInvalidateRange(targetAddr, 4);
+    if(codeEnd)clear_DC_IC_Cache((void*)((unsigned int)codeEnd - 8), 4);
+    clear_DC_IC_Cache(targetAddr, 4);
 }
 
 void installExtendedRegionColor(){
@@ -282,10 +274,10 @@ void installExtendedRegionColor(){
     u32ToBytes((void*)EXTENDED_REGION_COLOR_PATCH2_ADDR, 0x60000000);
     u32ToBytes((void*)EXTENDED_REGION_COLOR_PATCH3_ADDR, 0x60000000);
     u32ToBytes((void*)EXTENDED_REGION_COLOR_PATCH4_ADDR, 0x60000000);
-    ICInvalidateRange((void*)EXTENDED_REGION_COLOR_PATCH1_ADDR, 4);
-    ICInvalidateRange((void*)EXTENDED_REGION_COLOR_PATCH2_ADDR, 4);
-    ICInvalidateRange((void*)EXTENDED_REGION_COLOR_PATCH3_ADDR, 4);
-    ICInvalidateRange((void*)EXTENDED_REGION_COLOR_PATCH4_ADDR, 4);
+    clear_DC_IC_Cache((void*)EXTENDED_REGION_COLOR_PATCH1_ADDR, 4);
+    clear_DC_IC_Cache((void*)EXTENDED_REGION_COLOR_PATCH2_ADDR, 4);
+    clear_DC_IC_Cache((void*)EXTENDED_REGION_COLOR_PATCH3_ADDR, 4);
+    clear_DC_IC_Cache((void*)EXTENDED_REGION_COLOR_PATCH4_ADDR, 4);
     injectC2Patch((void*)EXTENDED_REGION_COLOR_PATCH5_ADDR, get_extended_region_color_patch_5(), get_extended_region_color_patch_5_end());
 }
 
@@ -315,16 +307,16 @@ void installRandomTexture(void){
 
     u32ToBytes((void*)LOAD_COURSE_PATCH1_ADDR, 0x48000048);//skip this b 0x48;
     //https://github.com/riidefi/mkw/blob/83186fbd1b12a05fc8539f6f0109b1318177778d/source/game/system/ResourceManager.cpp#L404
-    ICInvalidateRange((void*)LOAD_COURSE_PATCH1_ADDR, 4);
+    clear_DC_IC_Cache((void*)LOAD_COURSE_PATCH1_ADDR, 4);
 
     //https://github.com/riidefi/mkw/blob/83186fbd1b12a05fc8539f6f0109b1318177778d/source/game/system/ResourceManager.cpp#L411
     u32ToBytes((void*)LOAD_COURSE_PATCH2_ADDR, 0x60000000);//nop
-    ICInvalidateRange((void*)LOAD_COURSE_PATCH2_ADDR, 4);
+    clear_DC_IC_Cache((void*)LOAD_COURSE_PATCH2_ADDR, 4);
     injectC2Patch((void*)LOAD_COURSE_PATCH3_ADDR, get_load_course_hook_asm(), get_load_course_hook_asm_end());
     
     //installCourseCacheLoadHook();
     u32ToBytes((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 0x4e800020);//blr
-    ICInvalidateRange((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 4);
+    clear_DC_IC_Cache((void*)DISABLE_COURSE_CACHE_LOADER_ADDR, 4);
     injectC2Patch((void*)CUSTOM_BRSTM_LOADER_PATCH_ADDR, get_custom_brstm_loader(), get_custom_brstm_loader_end());
 }
 
@@ -342,21 +334,21 @@ void installChangeCharacterAndVehicleInBetweenRacesOnline(void){
 
 void patchMatchMakeRegion(void){
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_1, 0x38a00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_1, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_1, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_2, 0x38c00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_2, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_2, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_3, 0x38e00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_3, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_3, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_4, 0x38e00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_4, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_4, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_5, 0x38e00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_5, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_5, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_6, 0x38e00000 | myGlobalVarPtr->matchMakeRegion);
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_6, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_6, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_7, 0x38800000 | (myGlobalVarPtr->matchMakeRegion & 0xFF));
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_7, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_7, 4);
     u32ToBytes((void*)MATCH_MAKE_REGION_ADDR_8, 0x38800000 | (myGlobalVarPtr->matchMakeRegion & 0xFF));
-    ICInvalidateRange((void*)MATCH_MAKE_REGION_ADDR_8, 4);
+    clear_DC_IC_Cache((void*)MATCH_MAKE_REGION_ADDR_8, 4);
 }
 
 void applyRiivolutionFlags(void){
@@ -378,16 +370,16 @@ void applyRiivolutionFlags(void){
 //基本的にはデバッグ用
 void setFlagsForNonRiivolution(void){
     myGlobalVarPtr->changeRegionColor = 1;
-    myGlobalVarPtr->regionColor = 5;
+    myGlobalVarPtr->regionColor = 0xFF;
     myGlobalVarPtr->useCtgpReplicaSom = 1;
-    myGlobalVarPtr->somDigit = 2;
-    myGlobalVarPtr->wiimmfiPatcher = 0;
+    myGlobalVarPtr->somDigit = 0;
+    myGlobalVarPtr->wiimmfiPatcher = 1;
     myGlobalVarPtr->unlockEverything = 1;
     myGlobalVarPtr->useRandomTexture = 1;
     myGlobalVarPtr->disableOriginalTracks = 1;
-    myGlobalVarPtr->changeMatchMakeRegion = 1;
+    myGlobalVarPtr->changeMatchMakeRegion = 0;
     if(myGlobalVarPtr->changeMatchMakeRegion){
-        myGlobalVarPtr->matchMakeRegion = 1;
+        myGlobalVarPtr->matchMakeRegion = 0;
     }
 }
 
@@ -420,22 +412,13 @@ unsigned char isRealWiiU(void){
     return 0;
 }
 
-/*unsigned char isIosSupportUsbHid(void){
-    int fd = IOS_Open("/dev/usb/hid", 0);
-    if(fd >= 0){
-        IOS_Close(fd);
-        return 1;
-    }
-    return 0;
-}*/
+void OnRelLoaded(void){
+    installPadHook();
+    if(myGlobalVarPtr->useRandomTexture == 1)installDvdArchiveDecompressHook();
+}
 
-/*unsigned char isInOnlineRace(void){
-    int sceneID = getSceneID();
-    //https://wiki.tockdom.com/wiki/List_of_Identifiers
-    if(sceneID < 0x68)return 0;
-    if(sceneID > 0x76)return 0;
-    return 1;
-}*/
+void OnRelLoadedHookAddr(void);
+void on_rel_loaded_asm(void);
 
 unsigned char isInTitleScreen(void){
     int sceneID = getSceneID();
@@ -457,13 +440,11 @@ void __main(void){
     myGlobalVarPtr->courseCache = 0;
 
     myGlobalVarPtr->riivolutionLaunchTimer = -1;
-    myGlobalVarPtr->padHookInstallTimer = -1;
-    myGlobalVarPtr->alreadyInstalledPadHook = 0;
 
     unsigned char defaultRegion = *((unsigned char*)((void*)CHANGE_REGION_COLOR_ADDR));
 
     applyRiivolutionFlags();
-    //setFlagsForNonRiivolution();
+    setFlagsForNonRiivolution();
 
     if(!(myGlobalVarPtr->changeMatchMakeRegion))myGlobalVarPtr->matchMakeRegion = defaultRegion;
     patchMatchMakeRegion();
@@ -478,7 +459,6 @@ void __main(void){
         OSReport("[KZ-RTD]: real WiiU console detected!!\n");
     }*/
 
-    //installPadHook();
     installAntilagLateStart();
     installRiivolutionLauncher();
     injectC2Patch((void*)RUN_1FR_HOOK, get_run_1fr_asm(), get_run_1fr_asm_end());
@@ -489,12 +469,12 @@ void __main(void){
     //by mdmwii
     //https://mariokartwii.com/showthread.php?tid=349
     u32ToBytes((void*)DISABLE_TT_SAVE_ADDR, 0x60000000);
-    ICInvalidateRange((void*)DISABLE_TT_SAVE_ADDR, 4);
+    clear_DC_IC_Cache((void*)DISABLE_TT_SAVE_ADDR, 4);
 
     //by vega
     //https://mariokartwii.com/showthread.php?tid=1056
     u32ToBytes((void*)REGION_DISMATCH_DATA_RESET_ADDR, 0x7C601B78);
-    ICInvalidateRange((void*)REGION_DISMATCH_DATA_RESET_ADDR, 4);
+    clear_DC_IC_Cache((void*)REGION_DISMATCH_DATA_RESET_ADDR, 4);
 
     if(myGlobalVarPtr->changeRegionColor){
         //by anarion
@@ -516,8 +496,9 @@ void __main(void){
         //by _tz
         //https://mariokartwii.com/showthread.php?tid=1736
         u32ToBytes((void*)UNLOCK_EVERY_THING_ADDR, 0x38600001);
-        ICInvalidateRange((void*)UNLOCK_EVERY_THING_ADDR, 4);
+        clear_DC_IC_Cache((void*)UNLOCK_EVERY_THING_ADDR, 4);
     }
+    injectBranch((void*)on_rel_loaded_asm, (void*)OnRelLoadedHookAddr, true);
 }
 
 unsigned char dvdIsFileExist(const char *path){
@@ -538,15 +519,6 @@ void run_1fr(void){
     unsigned int sceneID = getSceneID();
     if(!myGlobalVarPtr)return;
     myGlobalVarPtr->randomNumber++;
-    //画面焼き付き防止機能を無効化
-    //VIResetDimmingCount();
-    if(myGlobalVarPtr->padHookInstallTimer < 30 && myGlobalVarPtr->padHookInstallTimer > -1)myGlobalVarPtr->padHookInstallTimer++;
-    if(myGlobalVarPtr->padHookInstallTimer == 30 && (!myGlobalVarPtr->alreadyInstalledPadHook)){
-        myGlobalVarPtr->alreadyInstalledPadHook = 1;
-        if(myGlobalVarPtr->useRandomTexture == 1)installDvdArchiveDecompressHook();
-        //installPadHook();
-    }
-    if(myGlobalVarPtr->padHookInstallTimer < 0 && isInTitleScreen())myGlobalVarPtr->padHookInstallTimer = 0;
     //https://wiki.tockdom.com/wiki/List_of_Identifiers
     //1PWi-Fiレース、バトル画面でキャッシュロードが発生したカウントをリセット
     if(sceneID == 0x68 || sceneID == 0x6C ||sceneID == 0x70 || sceneID == 0x71|| sceneID == 0x72 || sceneID == 0x73)myGlobalVarPtr->couresCacheloadCountOnline = 0;

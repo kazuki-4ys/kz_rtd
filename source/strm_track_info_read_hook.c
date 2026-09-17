@@ -29,7 +29,7 @@ void read_strm_sound_info_hook_asm_end(void);
 void installStrmTrackInfoReadHook(void){
     injectC2Patch((void*)PATCH1_ADDR, get_strm_track_info_read_hook_asm(), get_strm_track_info_read_hook_asm_end());
     u32ToBytes((void*)PATCH2_ADDR, 0x38000000);//li r0, 0
-    ICInvalidateRange(PATCH2_ADDR, 4);
+    clear_DC_IC_Cache((void*)PATCH2_ADDR, 4);
 }
 
 unsigned int strmTrackInfoReadHook(void *self, void *soundInfo, unsigned int trackId){

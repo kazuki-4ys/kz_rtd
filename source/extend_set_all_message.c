@@ -37,7 +37,7 @@ void installExtendedSetAllMessage(void){
     u32ToBytes((void*)PATCH3_ADDR, 0x386DBFC4);
     u32ToBytes((void*)PATCH4_ADDR, 0x2C14FFFF);
     u32ToBytes((void*)(PATCH4_ADDR + 4), 0x4082000C);
-    ICInvalidateRange((void*)PATCH2_ADDR, 4);
-    ICInvalidateRange((void*)PATCH3_ADDR, 4);
-    ICInvalidateRange((void*)PATCH4_ADDR, 8);
+    clear_DC_IC_Cache((void*)PATCH2_ADDR, 4);
+    clear_DC_IC_Cache((void*)PATCH3_ADDR, 4);
+    clear_DC_IC_Cache((void*)PATCH4_ADDR, 8);
 }

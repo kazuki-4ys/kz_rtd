@@ -4,7 +4,21 @@
 .global getSystemHeap_e
 .global getSystemHeap_j
 .global blTrickCommonEnd
-.global ICInvalidateRangeAsm
+.global on_rel_loaded_asm
+
+.macro pushStack
+    stwu sp, -0x80 (sp)#124 + パディング
+    mflr r0
+    stw r0, 0x84 (sp)
+    stmw r3, 8 (sp)
+.endm
+
+.macro popStack
+    lmw r3, 8 (sp)
+    lwz r0, 0x84 (sp)
+    mtlr r0
+    addi sp, sp, 0x80
+.endm
 
 #by vega
 #https://mariokartwii.com/showthread.php?tid=1218
@@ -23,25 +37,14 @@ getSystemHeap_j:
     lwz r3, 0x24(r3)
     blr
 
-ICInvalidateRangeAsm:
-	cmplwi r4, 0   # zero or negative size?
-	blelr
-	clrlwi. r5, r3, 27  # check for lower bits set in address
-	beq 1f
-	addi r4, r4, 0x20 
-1:
-	addi r4, r4, 0x1f
-	srwi r4, r4, 5
-	mtctr r4
-2:
-	icbi r0, r3
-	addi r3, r3, 0x20
-	bdnz 2b
-	sync
-	isync
-	blr
-
 blTrickCommonEnd:
     mflr r3
     mtlr r12
+    blr
+
+on_rel_loaded_asm:
+    pushStack
+    bl OnRelLoaded
+    popStack
+    lwz r26, 0x1C (r29)
     blr

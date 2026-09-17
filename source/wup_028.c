@@ -41,6 +41,9 @@
  * change /dev/usb/hid in a non-suported way, or if earlier IOSs may be
  * compatible. */
 
+#include "ipc.h"
+#include "wup_028.h"
+
 #ifdef RMCP
 
 #define PATCH1_ADDR 0x801af44c //PADRead
@@ -61,8 +64,6 @@
 #define PATCH2_ADDR 0x801AF828 //PADControlMotor
 
 #endif
-
-#include "pad_hook.h"
 
 typedef unsigned char uint8_t;
 typedef char int8_t;
@@ -106,37 +107,6 @@ struct PADData_t {
 
 typedef struct PADData_t PADData_t;
 
-typedef enum {
-    IPC_OK = 0,
-    IPC_EBUSY = -2,
-    IPC_EINVAL = -4,
-    IPC_ENOENT = -6,
-    IPC_EQUEUEFULL = -8,
-    IPC_ENOMEM = -22,
-} ios_ret_t;
-
-typedef enum {
-    IPC_OPEN_NONE = 0,
-    IPC_OPEN_READ = 1,
-    IPC_OPEN_WRITE = 2,
-    IPC_OPEN_RW = IPC_OPEN_READ + IPC_OPEN_WRITE
-} ios_mode_t;
-
-typedef void *usr_t;
-typedef int ios_fd_t;
-typedef void (*ios_open_cb_t)(ios_fd_t result, usr_t usrdata);
-typedef void (*ios_cb_t)(ios_ret_t result, usr_t usrdata);
-
-typedef struct _ioctlv {
-	void *data;
-	unsigned int len;
-} ioctlv;
-void DCFlushRange(const void *start, unsigned int length);
-ios_ret_t IOS_OpenAsync(const char *filepath, ios_mode_t mode, ios_open_cb_t cb, usr_t usrdata);
-ios_ret_t IOS_CloseAsync(ios_fd_t fd, ios_cb_t cb, usr_t usrdata);
-ios_ret_t IOS_IoctlAsync(ios_fd_t fd, int ioctl, const void *input, unsigned int input_length, void *output, unsigned int output_length, ios_cb_t cb, usr_t usrdata);
-ios_ret_t IOS_IoctlvAsync(ios_fd_t fd, int ioctl, int input_count, int output_count, ioctlv *argv, ios_cb_t cb, usr_t usrdata);
-
 /*============================================================================*/
 /* Macros */
 /*============================================================================*/
@@ -173,55 +143,95 @@ ios_ret_t IOS_IoctlvAsync(ios_fd_t fd, int ioctl, int input_count, int output_co
 /* Globals */
 /*============================================================================*/
 
-ios_fd_t dev_usb_hid_fd = -1;
-int8_t started = 0;
-PADData_t gcn_data[GCN_CONTROLLER_COUNT];
-uint32_t gcn_data_written;
-uint32_t gcn_adapter_id = -1;
+void *stolenMem;
+
+static ios_fd_t dev_usb_hid_fd = -1;
+static int8_t started = 0;
+static PADData_t gcn_data[GCN_CONTROLLER_COUNT];
+static uint32_t gcn_data_written;
+static uint32_t gcn_adapter_id = -1;
 #if defined(SUPPORT_DEV_USB_HID5) && defined(SUPPORT_DEV_USB_HID4)
 #define HAVE_VERSION
-int8_t version;
+static int8_t version;
 #endif
 int8_t error;
 int8_t errorMethod;
 /* Circular buffer of rumble outputs. */
-uint8_t rumble_sent = 0;
-uint8_t rumble_recv = 0;
-uint8_t rumble_buffer[RUMBLE_BUFFER][GCN_CONTROLLER_COUNT];
+static uint8_t rumble_sent = 0;
+static uint8_t rumble_recv = 0;
+static uint8_t rumble_buffer[RUMBLE_BUFFER][GCN_CONTROLLER_COUNT];
 /* Don't send next rumble until old one returns or timeout passes. */
-uint8_t rumble_delay;
-uint8_t rumble_token;
+static uint8_t rumble_delay;
+static uint8_t rumble_token;
 /* Messages for device. */
-uint8_t init_msg_buffer[1] IOS_ALIGN = { WUP_028_CMD_INIT };
+static uint8_t init_msg_buffer[1] IOS_ALIGN = { WUP_028_CMD_INIT };
 /* Pad buffer size to cache line size of IOS core. Otherwise IOS will write ver
  * later data, or we could read a stale value. */
-uint8_t poll_msg_buffer[-(-WUP_028_POLL_SIZE & ~0x1f)] IOS_ALIGN;
-uint8_t rumble_msg_buffer[1 + GCN_CONTROLLER_COUNT] IOS_ALIGN =
+static uint8_t poll_msg_buffer[-(-WUP_028_POLL_SIZE & ~0x1f)] IOS_ALIGN;
+static uint8_t rumble_msg_buffer[1 + GCN_CONTROLLER_COUNT] IOS_ALIGN =
   { WUP_028_CMD_RUMBLE };
+
+
+
+void DCFlushRange(void *ptr, size_t size);
+void myPADRead(PADData_t result[GCN_CONTROLLER_COUNT]);
+void PADRead(PADData_t result[GCN_CONTROLLER_COUNT]);
+void myPADControlMotor(int pad, int control);
+void PADControlMotor(int pad, int control);
+void AutoPressAHookAddr(void);
+void EGG__SceneManager__createSceneHookAddr(void);
+void EGG__SceneManager__createSceneHookAsm(void);
+void EGG__SceneManager__createSceneHook(void *parentMem2Heap){
+    //https://github.com/snailspeed3/mkw/blob/78572c95c41dbf6cbb7dd251a567e538560ce1d8/lib/egg/core/eggSceneManager.cpp#L104
+    //ここからジャンプしてくる
+    //本来シーンが使うはずのメモリを奪い取る
+    if(stolenMem)return;
+    OSReport("heap = 0x%08x\n", (unsigned int)parentMem2Heap);
+    stolenMem = Egg__Heap__Alloc(1024, 0x20, parentMem2Heap);
+    OSReport("alloced = 0x%08x\n", (stolenMem));
+}
+
+void installPadHook(void){
+  stolenMem = NULL;
+  injectBranch((void*)EGG__SceneManager__createSceneHookAsm, (void*)EGG__SceneManager__createSceneHookAddr, true);
+  injectBranch((void*)myPADRead, (void*)PADRead, false);
+  injectBranch((void*)myPADControlMotor, (void*)PADControlMotor, false);
+  u32ToBytes((void*)AutoPressAHookAddr, 0x4E800020);
+  clear_DC_IC_Cache((void*)AutoPressAHookAddr, 4);
+}
 
 /*============================================================================*/
 /* Top level interface to game */
 /*============================================================================*/
 
-uint32_t mftb(void);
-uint32_t cpu_isr_disable(void);
-void cpu_isr_restore(uint32_t isr);
-void onDevOpen(ios_fd_t fd, usr_t unused);
-void my_start(void);
+static uint32_t mftb(void);
+static uint32_t cpu_isr_disable(void);
+static void cpu_isr_restore(uint32_t isr);
+static void onDevOpen(ios_fd_t fd, usr_t unused);
 
-void myPADRead(PADData_t result[GCN_CONTROLLER_COUNT]);
-void myPADControlMotor(int pad, int control);
-
-void installPadHook(void){
-    started = 0;
-    injectC2Patch((void*)PATCH1_ADDR, myPADRead, NULL);
-}
+static struct {
+  uint32_t id;
+  uint32_t vid_pid;
+  uint32_t _unknown8;
+} *dev_usb_hid5_devices;
+/* This buffer gets managed pretty carefully. During init it's split 0x20 bytes
+ * to 0x60 bytes to store the descriptor. The rest of the time it's split
+ * evenly, one half for rumble messages and one half for polls. Be careful! */
+static uint32_t *dev_usb_hid5_buffer;
+static ioctlv dev_usb_hid5_argv[2] IOS_ALIGN;
+/* Polls may be sent at the same time as rumbles, so need two ioctlv arrays. */
+static ioctlv dev_usb_hid5_poll_argv[2] IOS_ALIGN;
 
 void myPADRead(PADData_t result[GCN_CONTROLLER_COUNT]) {
   uint32_t isr = cpu_isr_disable();
   if (!started) {
-    my_start();
-    injectC2Patch((void*)PATCH2_ADDR, myPADControlMotor, NULL);
+    if(!stolenMem){
+      cpu_isr_restore(isr);
+      return;
+    }
+    dev_usb_hid5_devices = stolenMem;
+    dev_usb_hid5_buffer = (void*)(((char*)stolenMem) + 512);
+
     /* On first call only, initialise USB and globals. */
     started = 1;
     for (int i = 0; i < GCN_CONTROLLER_COUNT; i++)
@@ -268,24 +278,24 @@ exit:
 /* USB support */
 /*============================================================================*/
 
-uint32_t mftb(void) {
+static uint32_t mftb(void) {
   uint32_t result;
   asm volatile ("mftb %0" : "=r"(result));
   return result;
 }
-uint32_t cpu_isr_disable(void) {
+static uint32_t cpu_isr_disable(void) {
   uint32_t isr, tmp;
   asm volatile("mfmsr %0; rlwinm %1, %0, 0, 0xFFFF7FFF; mtmsr %1" : "=r"(isr), "=r"(tmp));
   return isr;
 }
-void cpu_isr_restore(uint32_t isr) {
+static void cpu_isr_restore(uint32_t isr) {
   uint32_t tmp;
   asm volatile ("mfmsr %0; rlwimi %0, %1, 0, 0x8000; mtmsr %0" : "=&r"(tmp) : "r" (isr));
 }
 
-void callbackIgnore(ios_ret_t ret, usr_t unused);
-void onDevUsbInit(ios_ret_t ret, usr_t unused);
-void onDevUsbPoll(ios_ret_t ret, usr_t unused);
+static void callbackIgnore(ios_ret_t ret, usr_t unused);
+static void onDevUsbInit(ios_ret_t ret, usr_t unused);
+static void onDevUsbPoll(ios_ret_t ret, usr_t unused);
 
 #ifdef SUPPORT_DEV_USB_HID4
   /* The basic flow for version 4:
@@ -316,7 +326,7 @@ void onDevUsbPoll(ios_ret_t ret, usr_t unused);
   /* Version id. */
 # define DEV_USB_HID4_VERSION 0x00040001
 
-uint32_t dev_usb_hid4_devices[DEV_USB_HID4_DEVICE_CHANGE_SIZE] IOS_ALIGN;
+static uint32_t dev_usb_hid4_devices[DEV_USB_HID4_DEVICE_CHANGE_SIZE] IOS_ALIGN;
 struct interrupt_msg4 {
   uint8_t padding[16];
   uint32_t device;
@@ -325,31 +335,31 @@ struct interrupt_msg4 {
   void *ptr;
 };
 
-struct interrupt_msg4 init_msg4 IOS_ALIGN = {
+static struct interrupt_msg4 init_msg4 IOS_ALIGN = {
   .device = -1,
   .endpoint = WUP_028_ENDPOINT_OUT,
   .length = sizeof(init_msg_buffer),
   .ptr = init_msg_buffer
 };
 
-struct interrupt_msg4 poll_msg4 IOS_ALIGN = {
+static struct interrupt_msg4 poll_msg4 IOS_ALIGN = {
   .device = -1,
   .endpoint = WUP_028_ENDPOINT_IN,
   .length = WUP_028_POLL_SIZE,
   .ptr = poll_msg_buffer
 };
 
-struct interrupt_msg4 rumble_msg4 IOS_ALIGN = {
+static struct interrupt_msg4 rumble_msg4 IOS_ALIGN = {
   .device = -1,
   .endpoint = WUP_028_ENDPOINT_OUT,
   .length = sizeof(rumble_msg_buffer),
   .ptr = rumble_msg_buffer
 };
 
-void onDevGetVersion4(ios_ret_t ret, usr_t unused);
-void onDevUsbChange4(ios_ret_t ret, usr_t unused);
+static void onDevGetVersion4(ios_ret_t ret, usr_t unused);
+static void onDevUsbChange4(ios_ret_t ret, usr_t unused);
 
-int checkVersion4(ios_cb_t cb, usr_t data) {
+static int checkVersion4(ios_cb_t cb, usr_t data) {
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID4_IOCTL_GET_VERSION,
     NULL, 0,
@@ -357,7 +367,7 @@ int checkVersion4(ios_cb_t cb, usr_t data) {
     cb, data
   );
 }
-int getDeviceChange4(ios_cb_t cb, usr_t data) {
+static int getDeviceChange4(ios_cb_t cb, usr_t data) {
   return  IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID4_IOCTL_GET_DEVICE_CHANGE,
     NULL, 0,
@@ -366,7 +376,7 @@ int getDeviceChange4(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendInit4(ios_cb_t cb, usr_t data) {
+static int sendInit4(ios_cb_t cb, usr_t data) {
   init_msg4.device = gcn_adapter_id;
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID4_IOCTL_INTERRUPT_OUT,
@@ -376,7 +386,7 @@ int sendInit4(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendPoll4(ios_cb_t cb, usr_t data) {
+static int sendPoll4(ios_cb_t cb, usr_t data) {
   poll_msg4.device = gcn_adapter_id;
   DCFlushRange(poll_msg_buffer, sizeof(poll_msg_buffer));
   return IOS_IoctlAsync(
@@ -387,7 +397,7 @@ int sendPoll4(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendRumble4(ios_cb_t cb, usr_t data) {
+static int sendRumble4(ios_cb_t cb, usr_t data) {
   DCFlushRange(rumble_msg_buffer, 0x20);
   rumble_msg4.device = gcn_adapter_id;
   return IOS_IoctlAsync(
@@ -436,41 +446,14 @@ int sendRumble4(ios_cb_t cb, usr_t data) {
 
 # define OS_IPC_HEAP_HIGH ((void **)0x80003134)
 
-struct {
-  uint32_t id;
-  uint32_t vid_pid;
-  uint32_t _unknown8;
-} *dev_usb_hid5_devices;
-/* This buffer gets managed pretty carefully. During init it's split 0x20 bytes
- * to 0x60 bytes to store the descriptor. The rest of the time it's split
- * evenly, one half for rumble messages and one half for polls. Be careful! */
-uint32_t *dev_usb_hid5_buffer;
-ioctlv dev_usb_hid5_argv[2] IOS_ALIGN;
-/* Polls may be sent at the same time as rumbles, so need two ioctlv arrays. */
-ioctlv dev_usb_hid5_poll_argv[2] IOS_ALIGN;
 
-/* Annoyingly some of the buffers for v5 MUST be in MEM2, so we wrap _start to
- * allocate these before the application boots. */
+static void onDevGetVersion5(ios_ret_t ret, usr_t unused);
+static void onDevUsbAttach5(ios_ret_t ret, usr_t vcount);
+static void onDevUsbChange5(ios_ret_t ret, usr_t unused);
+static void onDevUsbResume5(ios_ret_t ret, usr_t unused);
+static void onDevUsbParams5(ios_ret_t ret, usr_t unused);
 
-void my_start(void) {
-  /* Allocate some area in MEM2. */
-  dev_usb_hid5_devices = *OS_IPC_HEAP_HIGH;
-  dev_usb_hid5_devices -= DEV_USB_HID5_DEVICE_CHANGE_SIZE;
-  *OS_IPC_HEAP_HIGH = dev_usb_hid5_devices;
-
-  dev_usb_hid5_buffer = *OS_IPC_HEAP_HIGH;
-  dev_usb_hid5_buffer -= DEV_USB_HID5_TMP_BUFFER_SIZE;
-  *OS_IPC_HEAP_HIGH = dev_usb_hid5_buffer;
-
-}
-
-void onDevGetVersion5(ios_ret_t ret, usr_t unused);
-void onDevUsbAttach5(ios_ret_t ret, usr_t vcount);
-void onDevUsbChange5(ios_ret_t ret, usr_t unused);
-void onDevUsbResume5(ios_ret_t ret, usr_t unused);
-void onDevUsbParams5(ios_ret_t ret, usr_t unused);
-
-int checkVersion5(ios_cb_t cb, usr_t data) {
+static int checkVersion5(ios_cb_t cb, usr_t data) {
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID5_IOCTL_GET_VERSION,
     NULL, 0,
@@ -478,7 +461,7 @@ int checkVersion5(ios_cb_t cb, usr_t data) {
     cb, data
   );
 }
-int getDeviceChange5(ios_cb_t cb, usr_t data) {
+static int getDeviceChange5(ios_cb_t cb, usr_t data) {
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID5_IOCTL_GET_DEVICE_CHANGE,
     NULL, 0,
@@ -487,7 +470,7 @@ int getDeviceChange5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendAttach5(ios_cb_t cb, usr_t data) {
+static int sendAttach5(ios_cb_t cb, usr_t data) {
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID5_IOCTL_ATTACH_FINISH,
     NULL, 0,
@@ -496,7 +479,7 @@ int sendAttach5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendResume5(ios_cb_t cb, usr_t data) {
+static int sendResume5(ios_cb_t cb, usr_t data) {
   dev_usb_hid5_buffer[0] = gcn_adapter_id;
   dev_usb_hid5_buffer[1] = 0;
   dev_usb_hid5_buffer[2] = 1;
@@ -513,7 +496,7 @@ int sendResume5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendParams5(ios_cb_t cb, usr_t data) {
+static int sendParams5(ios_cb_t cb, usr_t data) {
   /* Assumes buffer still in state from sendResume5 */
   return IOS_IoctlAsync(
     dev_usb_hid_fd, DEV_USB_HID5_IOCTL_GET_DEVICE_PARAMETERS,
@@ -523,7 +506,7 @@ int sendParams5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendInit5(ios_cb_t cb, usr_t data) {
+static int sendInit5(ios_cb_t cb, usr_t data) {
   /* Assumes buffer already set up */
   dev_usb_hid5_argv[0] = (ioctlv){dev_usb_hid5_buffer, 0x40};
   dev_usb_hid5_argv[1] = (ioctlv){init_msg_buffer, sizeof(init_msg_buffer)};
@@ -534,7 +517,7 @@ int sendInit5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendPoll5(ios_cb_t cb, usr_t data) {
+static int sendPoll5(ios_cb_t cb, usr_t data) {
   /* Assumes buffer already set up */
   dev_usb_hid5_poll_argv[0] = (ioctlv){dev_usb_hid5_buffer+0x10, 0x40};
   dev_usb_hid5_poll_argv[1] = (ioctlv){poll_msg_buffer, WUP_028_POLL_SIZE};
@@ -545,7 +528,7 @@ int sendPoll5(ios_cb_t cb, usr_t data) {
   );
 }
 
-int sendRumble5(ios_cb_t cb, usr_t data) {
+static int sendRumble5(ios_cb_t cb, usr_t data) {
   /* Assumes buffer already set up */
   dev_usb_hid5_argv[0] = (ioctlv){dev_usb_hid5_buffer, 0x40};
   dev_usb_hid5_argv[1] = (ioctlv){rumble_msg_buffer, sizeof(rumble_msg_buffer)};
@@ -558,7 +541,7 @@ int sendRumble5(ios_cb_t cb, usr_t data) {
 
 #endif
 
-void onError(void) {
+static void onError(void) {
   dev_usb_hid_fd = -1;
   IOS_CloseAsync(dev_usb_hid_fd, callbackIgnore, NULL);
 }
@@ -568,7 +551,7 @@ void onError(void) {
  * IOS command. */
 /*============================================================================*/
 
-void onDevOpen(ios_fd_t fd, usr_t unused) {
+static void onDevOpen(ios_fd_t fd, usr_t unused) {
   int ret;
   (void)unused;
   dev_usb_hid_fd = fd;
@@ -589,13 +572,13 @@ void onDevOpen(ios_fd_t fd, usr_t unused) {
   }
 }
 
-void callbackIgnore(ios_ret_t ret, usr_t unused) {
+static void callbackIgnore(ios_ret_t ret, usr_t unused) {
   (void)unused;
   (void)ret;
 }
 
 #ifdef SUPPORT_DEV_USB_HID4
-void onDevGetVersion4(ios_ret_t ret, usr_t unused) {
+static void onDevGetVersion4(ios_ret_t ret, usr_t unused) {
   (void)unused;
   if (ret == DEV_USB_HID4_VERSION) {
 #ifdef HAVE_VERSION
@@ -618,7 +601,7 @@ void onDevGetVersion4(ios_ret_t ret, usr_t unused) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID5
-void onDevGetVersion5(ios_ret_t ret, usr_t unused) {
+static void onDevGetVersion5(ios_ret_t ret, usr_t unused) {
   (void)unused;
   if (ret == 0 && dev_usb_hid5_buffer[0] == DEV_USB_HID5_VERSION) {
 #ifdef HAVE_VERSION
@@ -637,7 +620,7 @@ void onDevGetVersion5(ios_ret_t ret, usr_t unused) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID4
-void onDevUsbChange4(ios_ret_t ret, usr_t unused) {
+static void onDevUsbChange4(ios_ret_t ret, usr_t unused) {
   if (ret >= 0) {
     int found = 0;
     for (int i = 0; i < DEV_USB_HID4_DEVICE_CHANGE_SIZE && dev_usb_hid4_devices[i] < sizeof(dev_usb_hid4_devices); i += dev_usb_hid4_devices[i] / 4) {
@@ -666,7 +649,7 @@ void onDevUsbChange4(ios_ret_t ret, usr_t unused) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID5
-void onDevUsbChange5(ios_ret_t ret, usr_t unused) {
+static void onDevUsbChange5(ios_ret_t ret, usr_t unused) {
   if (ret >= 0) {
     ret = sendAttach5(onDevUsbAttach5, (usr_t)ret);
   }
@@ -679,7 +662,7 @@ void onDevUsbChange5(ios_ret_t ret, usr_t unused) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID5
-void onDevUsbAttach5(ios_ret_t ret, usr_t vcount) {
+static void onDevUsbAttach5(ios_ret_t ret, usr_t vcount) {
   if (ret == 0) {
     int found = 0;
     int count = (int)vcount;
@@ -697,6 +680,7 @@ void onDevUsbAttach5(ios_ret_t ret, usr_t vcount) {
       }
     }
     if (!found) gcn_adapter_id = (uint32_t)-1;
+
     ret = getDeviceChange5(onDevUsbChange5, NULL);
   }
   if (ret) {
@@ -708,7 +692,7 @@ void onDevUsbAttach5(ios_ret_t ret, usr_t vcount) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID5
-void onDevUsbResume5(ios_ret_t ret, usr_t unused) {
+static void onDevUsbResume5(ios_ret_t ret, usr_t unused) {
   if (ret == 0) {
     ret = sendParams5(onDevUsbParams5, NULL);
   }
@@ -721,7 +705,7 @@ void onDevUsbResume5(ios_ret_t ret, usr_t unused) {
 #endif
 
 #ifdef SUPPORT_DEV_USB_HID5
-void onDevUsbParams5(ios_ret_t ret, usr_t unused) {
+static void onDevUsbParams5(ios_ret_t ret, usr_t unused) {
   if (ret == 0) {
     /* 0-7 are already correct :) */
     dev_usb_hid5_buffer[8] = 0;
@@ -758,7 +742,7 @@ void onDevUsbParams5(ios_ret_t ret, usr_t unused) {
 }
 #endif
 
-void onRumble(ios_ret_t ret, usr_t token) {
+static void onRumble(ios_ret_t ret, usr_t token) {
   (void)ret;
   uint32_t isr = cpu_isr_disable();
   if ((usr_t)(uint32_t)rumble_token == token)
@@ -766,7 +750,7 @@ void onRumble(ios_ret_t ret, usr_t token) {
   cpu_isr_restore(isr);
 }
 
-int sendPoll(void) {
+static int sendPoll(void) {
   if (rumble_sent != rumble_recv) {
     uint32_t isr = cpu_isr_disable();
     if (rumble_delay == 0) {
@@ -807,10 +791,8 @@ int sendPoll(void) {
   return -1;
 }
 
-void onDevUsbInit(ios_ret_t ret, usr_t unused) {
-  if (ret >= 0) {
-    ret = sendPoll();
-  }
+static void onDevUsbInit(ios_ret_t ret, usr_t unused) {
+  if (ret >= 0) ret = sendPoll();
   if (ret) {
     error = ret;
     errorMethod = 8;
@@ -818,7 +800,7 @@ void onDevUsbInit(ios_ret_t ret, usr_t unused) {
   }
 }
 
-void onDevUsbPoll(ios_ret_t ret, usr_t unused) {
+static void onDevUsbPoll(ios_ret_t ret, usr_t unused) {
   if (ret >= 0) {
     if (poll_msg_buffer[0] == 0x21) {
       uint32_t isr = cpu_isr_disable();
@@ -862,4 +844,3 @@ void onDevUsbPoll(ios_ret_t ret, usr_t unused) {
     gcn_adapter_id = -1;
   }
 }
-

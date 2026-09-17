@@ -44,6 +44,6 @@ void installTrackMusicSpeedUpOnFinalLap(void){
     injectC2Patch((void*)PATCH3_ADDR, track_music_speed_up_on_final_lap_hook3, track_music_speed_up_on_final_lap_hook3_end);
     injectC2Patch((void*)PATCH4_ADDR, track_music_speed_up_on_final_lap_hook4, track_music_speed_up_on_final_lap_hook4_end);
     u32ToBytes((void*)(PATCH4_ADDR + 4), 0x41820028);
-    ICInvalidateRange((void*)(PATCH4_ADDR + 4), 4);
+    clear_DC_IC_Cache((void*)(PATCH4_ADDR + 4), 4);
     injectC2Patch((void*)(PATCH4_ADDR + 0xC), track_music_speed_up_on_final_lap_hook5, track_music_speed_up_on_final_lap_hook5_end);
 }
