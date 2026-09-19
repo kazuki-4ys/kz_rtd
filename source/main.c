@@ -444,7 +444,7 @@ void __main(void){
     unsigned char defaultRegion = *((unsigned char*)((void*)CHANGE_REGION_COLOR_ADDR));
 
     applyRiivolutionFlags();
-    setFlagsForNonRiivolution();
+    //setFlagsForNonRiivolution();
 
     if(!(myGlobalVarPtr->changeMatchMakeRegion))myGlobalVarPtr->matchMakeRegion = defaultRegion;
     patchMatchMakeRegion();

@@ -52,12 +52,12 @@ SECTIONS
         DVDReadPrio = 0x8015E754;
         DVDClose = 0x8015e488;
         memset = 0x80006038;
-        PADRead = 0x801AF36C;
-        PADControlMotor = 0x801AF828;
         EGG__SceneManager__createSceneHookAddr = 0x8023b02C;
         EGG__Decomp__getExpandSize = 0x8021989c;
         EGG__Decomp__decodeSZS = 0x80218b4c;
         OSFatal = 0x801a4de4;
+        PADReadHookAddr = 0x801af374;
+        PADControlMotorHookAddr = 0x801af830;
         AutoPressAHookAddr = 0x800077C8;
         OnRelLoadedHookAddr = 0x8000a1f0;
 }
