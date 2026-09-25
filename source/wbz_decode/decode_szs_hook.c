@@ -1,5 +1,6 @@
 #include "decode_szs_hook.h"
 #include "wu8_decode.h"
+#include "../my_mutex.h"
 #include "libbz2/bzlib.h"
 #include "liblzma/LzmaDec.h"
 
@@ -7,6 +8,7 @@
 
 #define PATCH1_ADDR 0x80519530
 #define PATCH2_ADDR 0x80218c2c
+#define PATCH3_ADDR 0x8051955c
 
 #endif
 
@@ -14,6 +16,7 @@
 
 #define PATCH1_ADDR 0x805150bc
 #define PATCH2_ADDR 0x80218b8c
+#define PATCH3_ADDR 0x805150e8
 
 #endif
 
@@ -21,14 +24,19 @@
 
 #define PATCH1_ADDR 0x80518eb0
 #define PATCH2_ADDR 0x80218b4c
+#define PATCH3_ADDR 0x80518edc
 
 #endif
+
+static MyMutex m;
 
 void dvd_archive_decompress_hook1_asm(void);
 void dvd_archive_decompress_hook1_asm_end(void);
 
 void dvd_archive_decompress_hook2_asm(void);
 void dvd_archive_decompress_hook2_asm_end(void);
+
+void dvd_archive_decompress_hook3_asm(void);
 
 void bz_internal_error(int errcode){
     OSReport("[KZ-RTD]: bz_internal_error errcode = %d\n", errcode);
@@ -37,18 +45,18 @@ void bz_internal_error(int errcode){
 int EGG__Decomp__getExpandSize_Replace(unsigned char *src);
 
 void installDvdArchiveDecompressHook(void){
+    MyMutex_Init(&m);
     injectC2Patch((void*)PATCH1_ADDR, dvd_archive_decompress_hook1_asm, dvd_archive_decompress_hook1_asm_end);
     injectC2Patch((void*)PATCH2_ADDR, dvd_archive_decompress_hook2_asm, dvd_archive_decompress_hook2_asm_end);
     injectC2Patch(EGG__Decomp__getExpandSize, EGG__Decomp__getExpandSize_Replace, NULL);
+    injectBranch((void*)dvd_archive_decompress_hook3_asm, (void*)PATCH3_ADDR, true);
 }
 
-void *decodeSzsHeap;
 unsigned int srcSize;
 
 unsigned int DvdArchiveDecompressHook1(unsigned char *fileStart, void *heap, unsigned int sourceSize){
     //replace here.
     //https://github.com/riidefi/mkw/blob/master/source/game/system/DvdArchive.cpp#L222
-    decodeSzsHeap = heap;
     if(!memcmp(fileStart, "Yaz0", 4))return EGG__Decomp__getExpandSize(fileStart);
     //Assume that this is wbz or wlz.
     unsigned int result;
@@ -60,23 +68,28 @@ unsigned int DvdArchiveDecompressHook1(unsigned char *fileStart, void *heap, uns
 void decompressBz2(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap);
 void decompressLzma(unsigned char *src, unsigned int srcSize, unsigned char *dest, unsigned int destSize, void *heap);
 
-unsigned int DvdArchiveDecompressHook2(unsigned char* src, unsigned char *dest){
+unsigned int DvdArchiveDecompressHook2(unsigned char* src, unsigned char *dest, void *heap){
     //replace here.
     //https://github.com/riidefi/mkw/blob/40c587abb0bb386532aaf038e290524c86ab4c1f/source/egg/core/eggDecomp.cpp#L35
+    MyMutex_Lock(&m);
     if(!memcmp(src, "Yaz", 3)){
         if(!memcmp(src + 0x10, "\x42\x5a\x68", 3)){
-            decompressBz2(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), decodeSzsHeap);
+            decompressBz2(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), heap);
+            MyMutex_Unlock(&m);
             return *((unsigned int*)((void*)(src + 0x4)));
         }
         if(!memcmp(src + 0x10, "\x5d\x00\x00", 3)){
-            decompressLzma(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), decodeSzsHeap);
+            decompressLzma(src + 0x10, *((unsigned int*)((void*)(src + 0x8))), dest, *((unsigned int*)((void*)(src + 0x4))), heap);
+            MyMutex_Unlock(&m);
             return *((unsigned int*)((void*)(src + 0x4)));
         }
+        MyMutex_Unlock(&m);
         return 0;
     }
-    if(!memcmp(src, "WBZa", 4))decompressBz2(src + 0x10, srcSize - 0x10, dest, *((unsigned int*)((void*)(src + 0xC))), decodeSzsHeap);
-    if(!memcmp(src, "WLZa", 4))decompressLzma(src + 0x10, srcSize - 0x10, dest, *((unsigned int*)((void*)(src + 0xC))), decodeSzsHeap);
-    if(!memcmp(dest, "WU8a", 4))decode_wu8(dest, *((unsigned int*)((void*)(src + 0xC))), decodeSzsHeap);
+    if(!memcmp(src, "WBZa", 4))decompressBz2(src + 0x10, srcSize - 0x10, dest, *((unsigned int*)((void*)(src + 0xC))), heap);
+    if(!memcmp(src, "WLZa", 4))decompressLzma(src + 0x10, srcSize - 0x10, dest, *((unsigned int*)((void*)(src + 0xC))), heap);
+    if(!memcmp(dest, "WU8a", 4))decode_wu8(dest, *((unsigned int*)((void*)(src + 0xC))), heap);
+    MyMutex_Unlock(&m);
     return *((unsigned int*)((void*)(src + 0xC)));
 }
 

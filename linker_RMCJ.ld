@@ -60,4 +60,9 @@ SECTIONS
         PADControlMotorHookAddr = 0x801af830;
         AutoPressAHookAddr = 0x800077C8;
         OnRelLoadedHookAddr = 0x8000a1f0;
+        __OSBusClock = 0x800000F8;
+        OSSleepTicks = 0x801aabc8;
+        OSDisableInterrupts = 0x801a64cc;
+        OSRestoreInterrupts = 0x801a64f4;
+
 }
