@@ -4,7 +4,6 @@
 .global dvd_archive_decompress_hook1_asm_end
 .global dvd_archive_decompress_hook2_asm
 .global dvd_archive_decompress_hook2_asm_end
-.global dvd_archive_decompress_hook3_asm
 
 .macro pushStack
     stwu sp, -0x80 (sp)#124 + パディング
@@ -49,10 +48,3 @@ stwu sp, -0x10 (sp)
 .long 0
 .long 0
 dvd_archive_decompress_hook2_asm_end:
-
-#replace here
-#https://github.com/snailspeed3/mkw/blob/78572c95c41dbf6cbb7dd251a567e538560ce1d8/src/system/DvdArchive.cpp#L224
-dvd_archive_decompress_hook3_asm:
-mr r4, r30
-mr r5, r29
-blr

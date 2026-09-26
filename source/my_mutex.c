@@ -9,17 +9,14 @@ void MyMutex_Init(MyMutex *m){
 }
 
 void MyMutex_Lock(MyMutex *m){
-    while(1){
-        int state = OSDisableInterrupts();
-        if(m->locked){
-            OSRestoreInterrupts(state);
-            SleepMicroseconds(1000);
-            continue;
-        }
-        m->locked = true;
+    int state = OSDisableInterrupts();
+    while(m->locked){
         OSRestoreInterrupts(state);
-        break;
+        SleepMicroseconds(1000);
+        state = OSDisableInterrupts();
     }
+    m->locked = true;
+    OSRestoreInterrupts(state);
 }
 
 void MyMutex_Unlock(MyMutex *m){
