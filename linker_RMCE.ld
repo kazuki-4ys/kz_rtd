@@ -5,9 +5,9 @@ SECTIONS
                 *(.text.__main);
                 *(.text*);
         }
-        myGlobalVarPtr = 0x80000CC0;
+        myGlobalVarPtr = 0x80000cc0;
         OSReport = 0x801a2530;
-        strcmp =  0x8001273c;
+        strcmp = 0x8001273c;
         Egg__Heap__Alloc = 0x80229490;
         DVDConvertPathToEntryNum = 0x8015deac;
         DvdArchive__ripFile = 0x80514c7c;
@@ -16,6 +16,7 @@ SECTIONS
         DVDClose = 0x8015e4c8;
         memcpy = 0x80005f34;
         memcmp = 0x8000e7b4;
+        memmove = 0x8000e690;
         strncpy = 0x80012680;
         sprintf = 0x80010ecc;
         NETCalcCRC32 = 0x801d1c00;
@@ -30,16 +31,17 @@ SECTIONS
         MultiDvdArchive__clear = 0x805267cc;
         IOS_IoctlAsync = 0x801940b8;
         IOS_IoctlvAsync = 0x8019445c;
-        IOS_OpenAsync =  0x80193740;
+        IOS_OpenAsync = 0x80193740;
         IOS_CloseAsync = 0x80193978;
         DCFlushRange = 0x801a158c;
+        ICInvalidateRange = 0x801a1670;
         VIResetDimmingCount = 0x801bb00c;
         Egg__ExpHeap__create = 0x80226744;
         sSystem__Q23EGG10BaseSystem = 0x80382bd8;
         nw4r__ut__List_GetNext = 0x800af0e0;
-        RACEDATA = 0x809B8F68;
-        SubtractTimers = 0x808423FC;
-        trackMusicSpeedUpPatch4PlusCLwzAddr = 0x809BDC10;
+        RACEDATA = 0x809b8f68;
+        SubtractTimers = 0x808423fc;
+        trackMusicSpeedUpPatch4PlusCLwzAddr = 0x809bdc10;
         Egg__Heap__Free = 0x80229800;
         ISFS_Read = 0x8016b15c;
         UI__LayoutUIControl__setPicture = 0x8060ccd0;
@@ -49,7 +51,16 @@ SECTIONS
         DVDReadPrio = 0x8015e794;
         DVDClose = 0x8015e4c8;
         memset = 0x80006038;
+        EGG__SceneManager__createSceneHookAddr = 0x8023ad88;
         EGG__Decomp__getExpandSize = 0x802198dc;
         EGG__Decomp__decodeSZS = 0x80218b8c;
         OSFatal = 0x801a4e24;
+        PADReadHookAddr = 0x801af3b4;
+        PADControlMotorHookAddr = 0x801af870;
+        AutoPressAHookAddr = 0x800077c8;
+        OnRelLoadedHookAddr = 0x8000a254;
+        __OSBusClock = 0x800000f8;
+        OSSleepTicks = 0x801aac08;
+        OSDisableInterrupts = 0x801a650c;
+        OSRestoreInterrupts = 0x801a6534;
 }

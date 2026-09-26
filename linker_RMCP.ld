@@ -16,6 +16,7 @@ SECTIONS
         DVDClose = 0x8015e568;
         memcpy = 0x80005F34;
         memcmp = 0x8000f314;
+        memmove = 0x8000f1f0;
         strncpy = 0x800131e0;
         sprintf = 0x80011a2c;
         NETCalcCRC32 = 0x801d1ca0;
@@ -33,6 +34,7 @@ SECTIONS
         IOS_OpenAsync =  0x801937e0;
         IOS_CloseAsync = 0x80193a18;
         DCFlushRange = 0x801a162c;
+        ICInvalidateRange = 0x801a1710;
         VIResetDimmingCount = 0x801bb0ac;
         Egg__ExpHeap__create = 0x80226ac8;
         sSystem__Q23EGG10BaseSystem = 0x80386f60;
@@ -49,7 +51,16 @@ SECTIONS
         DVDReadPrio = 0x8015e834;
         DVDClose = 0x8015e568;
         memset = 0x80006038;
+        EGG__SceneManager__createSceneHookAddr = 0x8023b10c;
         EGG__Decomp__getExpandSize = 0x8021997c;
         EGG__Decomp__decodeSZS = 0x80218c2c;
         OSFatal = 0x801a4ec4;
+        PADReadHookAddr = 0x801af454;
+        PADControlMotorHookAddr = 0x801af910;
+        AutoPressAHookAddr = 0x800077C8;
+        OnRelLoadedHookAddr = 0x8000a294;
+        __OSBusClock = 0x800000F8;
+        OSSleepTicks = 0x801aaca8;
+        OSDisableInterrupts = 0x801a65ac;
+        OSRestoreInterrupts = 0x801a65d4;
 }
